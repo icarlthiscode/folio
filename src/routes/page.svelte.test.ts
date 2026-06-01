@@ -211,18 +211,25 @@ describe('+page.svelte', () => {
     const expectedHighlights = [
       {
         id : '1',
-        type : 'article',
+        type : 'article' as const,
         key : 'example1',
+        title : '',
+        links : [],
         section : 'exampleSection1',
       },
       {
         id : '2',
-        type : 'tag',
+        type : 'tag' as const,
         key : 'example2',
+        title : '',
+        links : [],
         section : 'exampleSection2',
       },
     ];
-    const config = { highlights : expectedHighlights } as Config;
+    const config = {
+      ...defaultConfig,
+      highlights : expectedHighlights,
+    } as Config;
     setConfig(config);
 
     const { container } = render(HomePage, { data : defaultData });
@@ -253,10 +260,14 @@ describe('+page.svelte', () => {
     const expectedContent = 'Test Article Content';
     const expectedArticle = { title : 'Test Article' } as Article;
     const config = {
+      ...defaultConfig,
       highlights : [
         {
+          id : '1',
           type : 'article',
           key : expectedKey,
+          title : '',
+          links : [],
           section : 'exampleSection',
         },
       ],
@@ -321,10 +332,14 @@ describe('+page.svelte', () => {
   it('hides content background server-side', () => {
     isBrowser = false;
     const config = {
+      ...defaultConfig,
       highlights : [
         {
+          id : '1',
           type : 'tag',
           key : 'example',
+          title : 'Example',
+          links : [],
           section : 'exampleSection',
         },
       ],

@@ -4,6 +4,7 @@ import { render, within } from '@testing-library/svelte';
 import { wrapOriginal } from '$lib/tests/component';
 import type { Article } from '$lib/utils/weblog';
 import Heading from '$lib/materials/heading.svelte';
+import NavLinks from '$lib/materials/navLinks.svelte';
 import ArticleIndex from './articleIndex.svelte';
 import Post from './post.svelte';
 import Highlight from './highlight.svelte';
@@ -28,6 +29,9 @@ vi.mock('$lib/hooks/useLocale', async (original) => {
 vi.mock('$lib/materials/heading.svelte', async (original) => {
   return { default : await wrapOriginal(original, { testId : 'heading' }) };
 });
+vi.mock('$lib/materials/navLinks.svelte', async (original) => {
+  return { default : await wrapOriginal(original, { testId : 'nav' }) };
+});
 vi.mock('$lib/components/articleIndex.svelte', async (original) => {
   return { default : await wrapOriginal(original, { testId : 'index' }) };
 });
@@ -42,11 +46,12 @@ describe('Highlight', () => {
   it('renders tag highlight heading', () => {
     const highlight = {
       id : 'test-highlight',
-      type : 'tag',
+      type : 'tag' as const,
       key : 'test',
-      section : 'highlightTest',
       title : 'Test Tag Title',
-    } as const;
+      links : [],
+      section : 'highlightTest',
+    };
     const { container } = render(Highlight, { highlight });
 
     const index = within(container)
@@ -56,7 +61,7 @@ describe('Highlight', () => {
       .queryByTestId('heading') as HTMLElement;
     expect(heading).toBeInTheDocument();
 
-    expect(Heading).toHaveBeenCalledTimes(1);
+    expect(Heading).toHaveBeenCalledOnce();
     expect(Heading).toHaveBeenCalledWithProps(
       expect.objectContaining({
         id : highlight.id,
@@ -73,11 +78,12 @@ describe('Highlight', () => {
   it('renders article highlight heading', () => {
     const highlight = {
       id : 'test-highlight',
-      type : 'article',
+      type : 'article' as const,
       key : 'test',
-      section : 'highlightTest',
       title : 'Test Tag Title',
-    } as const;
+      links : [],
+      section : 'highlightTest',
+    };
     const { container } = render(Highlight, { highlight });
 
     const post = within(container)
@@ -87,7 +93,7 @@ describe('Highlight', () => {
       .queryByTestId('heading') as HTMLElement;
     expect(heading).toBeInTheDocument();
 
-    expect(Heading).toHaveBeenCalledTimes(1);
+    expect(Heading).toHaveBeenCalledOnce();
     expect(Heading).toHaveBeenCalledWithProps(
       expect.objectContaining({
         id : highlight.id,
@@ -103,17 +109,19 @@ describe('Highlight', () => {
   it('renders default heading', () => {
     const highlight = {
       id : 'test-highlight',
-      type : 'tag',
+      type : 'tag' as const,
       key : 'test',
+      title : '',
+      links : [],
       section : 'highlightTest',
-    } as const;
+    };
     const { container } = render(Highlight, { highlight });
 
     const heading = within(container)
       .queryByTestId('heading') as HTMLElement;
     expect(heading).toBeInTheDocument();
 
-    expect(Heading).toHaveBeenCalledTimes(1);
+    expect(Heading).toHaveBeenCalledOnce();
     expect(Heading).toHaveBeenCalledWithProps(
       expect.objectContaining({
         id : highlight.id,
@@ -126,17 +134,19 @@ describe('Highlight', () => {
   it('renders article index with highlight tag', async () => {
     const highlight = {
       id : 'test-highlight',
-      type : 'tag',
+      type : 'tag' as const,
       key : 'test',
+      title : 'Test Tag Title',
+      links : [],
       section : 'highlightTest',
-    } as const;
+    };
     const { container } = render(Highlight, { highlight });
 
     const index = within(container)
       .queryByTestId('index') as HTMLElement;
     expect(index).toBeInTheDocument();
 
-    expect(ArticleIndex).toHaveBeenCalledTimes(1);
+    expect(ArticleIndex).toHaveBeenCalledOnce();
     expect(ArticleIndex).toHaveBeenCalledWithProps(
       expect.objectContaining({ tag : highlight.key }),
     );
@@ -147,10 +157,12 @@ describe('Highlight', () => {
     const expectedContent = 'Test Article Content';
     const highlight = {
       id : 'test-highlight',
-      type : 'article',
+      type : 'article' as const,
       key : 'test',
+      title : 'Test Tag Title',
+      links : [{ text : '', href : '' }],
       section : 'highlightTest',
-    } as const;
+    };
     const expectedMetadata = {
       datePublished : new Date(),
       contributions : [{ byline : 'Tested by ' }],
@@ -166,12 +178,74 @@ describe('Highlight', () => {
       .queryByTestId('post') as HTMLElement;
     expect(post).toBeInTheDocument();
 
-    expect(Post).toHaveBeenCalledTimes(1);
+    expect(Post).toHaveBeenCalledOnce();
     expect(Post).toHaveBeenCalledWithProps(expect.objectContaining({
       content : expectedContent,
       datePublished : expectedMetadata.datePublished,
       contributions : expectedMetadata.contributions,
     }));
     expect(ArticleIndex).not.toHaveBeenCalled();
+  });
+
+  it('renders article index links', async () => {
+    const highlight = {
+      id : 'test-highlight',
+      type : 'tag' as const,
+      key : 'test',
+      title : 'Test Tag Title',
+      links : [{ text : 'Test Link', href : '#test' }],
+      section : 'highlightTest',
+    };
+    const { container } = render(Highlight, { highlight });
+
+    const index = within(container)
+      .queryByTestId('index') as HTMLElement;
+    expect(index).toBeInTheDocument();
+    const links = within(container)
+      .queryByTestId('nav') as HTMLElement;
+    expect(links).toBeInTheDocument();
+    expect(links.compareDocumentPosition(index))
+      .toBe(Node.DOCUMENT_POSITION_PRECEDING);
+
+    expect(NavLinks).toHaveBeenCalledOnce();
+    expect(NavLinks).toHaveBeenCalledWithProps(expect.objectContaining({
+      links : highlight.links,
+    }));
+  });
+
+  it('renders article links', async () => {
+    const expectedContent = 'Test Article Content';
+    const highlight = {
+      id : 'test-highlight',
+      type : 'article' as const,
+      key : 'test',
+      title : 'Test Tag Title',
+      links : [{ text : '', href : '' }],
+      section : 'highlightTest',
+    };
+    const expectedMetadata = {
+      datePublished : new Date(),
+      contributions : [{ byline : 'Tested by ' }],
+    } as Article;
+
+    const { container } = render(Highlight, {
+      highlight,
+      article : expectedContent,
+      metadata : expectedMetadata,
+    });
+
+    const post = within(container)
+      .queryByTestId('post') as HTMLElement;
+    expect(post).toBeInTheDocument();
+    const links = within(container)
+      .queryByTestId('nav') as HTMLElement;
+    expect(links).toBeInTheDocument();
+    expect(links.compareDocumentPosition(post))
+      .toBe(Node.DOCUMENT_POSITION_PRECEDING);
+
+    expect(NavLinks).toHaveBeenCalledOnce();
+    expect(NavLinks).toHaveBeenCalledWithProps(expect.objectContaining({
+      links : highlight.links,
+    }));
   });
 });

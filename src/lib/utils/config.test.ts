@@ -105,8 +105,12 @@ describe('config highlights', () => {
     });
     expect(config).toEqual(expect.objectContaining({
       highlights : [
-        { id : 'tag1', type : 'tag', key : 'tag1', section : 'Section 1' },
-        { id : 'tag2', type : 'tag', key : 'tag2' },
+        expect.objectContaining(
+          { id : 'tag1', type : 'tag', key : 'tag1', section : 'Section 1' },
+        ),
+        expect.objectContaining(
+          { id : 'tag2', type : 'tag', key : 'tag2' },
+        ),
       ],
     }));
   });
@@ -117,21 +121,21 @@ describe('config highlights', () => {
       highlights : [
         { id : 'art1', type : 'article', key : 'art1', section : 'Section 1' },
         { id : 'tag1', type : 'tag', key : 'tag1', section : 'Section 1' },
-        { id : 'tag1', key : 'tag1', section : 'Section 1' },
+        { id : 'tag2', key : 'tag2', section : 'Section 1' },
         { type : 'tag', key : 'tag1', section : 'Section 1' },
         { id : 'cat1', type : 'category', key : 'cat1' },
-        { id : 'tag2', type : 'tag' },
-        { id : 'tag3', type : 'tag', key : 123 },
-        { id : 'tag4', type : 'tag', key : 'tag2', title : 456 },
-        { id : 'tag5', type : 'tag', key : 'tag2', section : 456 },
+        { id : 'tag3', type : 'tag' },
+        { id : 'tag4', type : 'tag', key : 123 },
       ],
     });
-    expect(config).toEqual(expect.objectContaining({
-      highlights : [
+    expect(config).toEqual(expect.objectContaining({ highlights : [
+      expect.objectContaining(
         { id : 'art1', type : 'article', key : 'art1', section : 'Section 1' },
+      ),
+      expect.objectContaining(
         { id : 'tag1', type : 'tag', key : 'tag1', section : 'Section 1' },
-      ],
-    }));
+      ),
+    ] }));
   });
 
   it('filters out duplicate highlight IDs', () => {
@@ -146,8 +150,80 @@ describe('config highlights', () => {
     });
     expect(config).toEqual(expect.objectContaining({
       highlights : [
-        { id : 'tag1', type : 'tag', key : 'tag1' },
-        { id : 'tag2', type : 'tag', key : 'tag2' },
+        expect.objectContaining({ id : 'tag1', key : 'tag1' }),
+        expect.objectContaining({ id : 'tag2', key : 'tag2' }),
+      ],
+    }));
+  });
+
+  it('replaces invalid highlight title', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [
+        { id : 'art1', type : 'article', key : 'art1', title : 'Test Title' },
+        { id : 'art2', type : 'article', key : 'art2', title : 42 },
+      ],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'art1', title : 'Test Title' }),
+        expect.objectContaining({ id : 'art2', title : '' }),
+      ],
+    }));
+  });
+
+  it('replaces invalid highlight section', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [
+        { id : 'art1', type : 'article', key : 'art1', section : 'Section 1' },
+        { id : 'art2', type : 'article', key : 'art2', section : 42 },
+      ],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'art1', section : 'Section 1' }),
+        expect.objectContaining({ id : 'art2', section : '' }),
+      ],
+    }));
+  });
+
+  it('replaces invalid links', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [
+        { id : 'art1', type : 'article', key : 'art1', links : [
+          { text : 'Link 1', href : '/link1' },
+        ] },
+        { id : 'art2', type : 'article', key : 'art2', links : {} },
+      ],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'art1', links : [
+          expect.objectContaining({ text : 'Link 1', href : '/link1' }),
+        ] }),
+        expect.objectContaining({ id : 'art2', links : [] }),
+      ],
+    }));
+  });
+
+  it('drops invalid link', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [
+        { id : 'art1', type : 'article', key : 'art1', links : [
+          { text : 'Link 1', href : '/link1' },
+          { text : 'Link 2', href : 42 },
+          { text : 42, href : '/link3' },
+        ] },
+      ],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'art1', links : [
+          expect.objectContaining({ text : 'Link 1', href : '/link1' }),
+        ] }),
       ],
     }));
   });

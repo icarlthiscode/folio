@@ -2,8 +2,9 @@ export interface Highlight {
   id : string;
   type : 'article' | 'tag';
   key : string;
-  title ?: string;
-  section ?: string;
+  links : { href : string; text : string; }[];
+  title : string;
+  section : string;
 }
 
 export interface Config {
@@ -13,7 +14,7 @@ export interface Config {
   highlights : Highlight[] | null;
   contact : {
     icon : string;
-    text ?: string;
+    text : string;
     link : string;
     href : string;
   }[] | null;
@@ -70,10 +71,26 @@ export function buildConfig(config : unknown) : Config {
         return false;
       }
       if (!('key' in item) || typeof item.key !== 'string') return false;
-      if ('title' in item && typeof item.title !== 'string') return false;
-      if ('section' in item && typeof item.section !== 'string') return false;
       highlightIds.push(item.id);
       return true;
+    }).map((item) => {
+      const newItem = { ...item };
+      if (!('title' in item) || typeof item.title !== 'string') {
+        newItem.title = '';
+      }
+      if (!('section' in item) || typeof item.section !== 'string') {
+        newItem.section = '';
+      }
+      if (!('links' in item) || !Array.isArray(item.links)) {
+        newItem.links = [];
+      }
+      newItem.links = newItem.links.filter((link) => {
+        if (typeof link !== 'object' || link === null) return false;
+        if (!('href' in link) || typeof link.href !== 'string') return false;
+        if (!('text' in link) || typeof link.text !== 'string') return false;
+        return true;
+      });
+      return newItem;
     });
   }
 

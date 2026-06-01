@@ -28,7 +28,7 @@
   <Profile />
 </Content>
 {#each highlights as highlight (highlight.id)}
-  <Content section={highlight.section ?? 'default'} showBackground={browser}>
+  <Content section={highlight.section || 'default'} showBackground={browser}>
     <Highlight
       {highlight}
       article={data.articles?.[highlight.key]}
