@@ -25,6 +25,7 @@ export const defaultLocale = {
   nav : {
     home : 'Home',
     highlights : {} as Record<string, string>,
+    allArticles : 'Blog',
     contact : 'Contact',
   },
   alt : {

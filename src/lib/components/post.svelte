@@ -8,6 +8,7 @@
   import Stack from '$lib/materials/stack.svelte';
   import Heading from '$lib/materials/heading.svelte';
   import Link from '$lib/materials/link.svelte';
+  import NavLinks from '$lib/materials/navLinks.svelte';
   import Article from '$lib/materials/article.svelte';
   import Dateline from './dateline.svelte';
   import Byline from './byline.svelte';
@@ -15,12 +16,16 @@
   const {
     content,
     heading,
-    datePublished,
-    contributions,
+    datePublished = null,
+    topLinks = [],
+    bottomLinks = [],
+    contributions = [],
     compact = false,
   } : {
     content ?: string;
     heading ?: { text : string; href ?: string; level ?: 1 | 2 | 3; };
+    topLinks ?: { text : string; href : string; }[];
+    bottomLinks ?: { text : string; href : string; }[];
     datePublished ?: Date | null;
     contributions ?: Contribution[];
     compact ?: boolean;
@@ -39,10 +44,10 @@
   });
 
   const topCredits = $derived(
-    contributions?.filter(c => $config.weblog?.topCredits.includes(c.slug)),
+    contributions.filter(c => $config.weblog?.topCredits.includes(c.slug)),
   );
   const bottomCredits = $derived(
-    contributions?.filter(c => $config.weblog?.bottomCredits.includes(c.slug)),
+    contributions.filter(c => $config.weblog?.bottomCredits.includes(c.slug)),
   );
 </script>
 
@@ -59,13 +64,19 @@
     {@html title}
   {/if}
   <Dateline date={datePublished} />
-  {#if topCredits?.length}
+  {#if topLinks.length}
+    <NavLinks links={topLinks} compact />
+  {/if}
+  {#if topCredits.length}
     <Byline contributions={topCredits} />
   {/if}
   {#if !compact}
     <Stack>{@html body}</Stack>
   {:else}
     {@html body}
+  {/if}
+  {#if bottomLinks.length}
+    <NavLinks links={bottomLinks} compact />
   {/if}
   {#if bottomCredits.length}
     <Byline contributions={bottomCredits} />

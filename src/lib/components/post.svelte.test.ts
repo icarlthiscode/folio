@@ -10,6 +10,7 @@ import {
 import Stack from '$lib/materials/stack.svelte';
 import Heading from '$lib/materials/heading.svelte';
 import Link from '$lib/materials/link.svelte';
+import NavLinks from '$lib/materials/navLinks.svelte';
 import Article from '$lib/materials/article.svelte';
 import Dateline from './dateline.svelte';
 import Byline from './byline.svelte';
@@ -51,6 +52,9 @@ vi.mock('$lib/materials/heading.svelte', async (original) => {
 });
 vi.mock('$lib/materials/link.svelte', async (original) => {
   return { default : await wrapOriginal(original, { testId : 'link' }) };
+});
+vi.mock('$lib/materials/navLinks.svelte', async (original) => {
+  return { default : await wrapOriginal(original, { testId : 'nav' }) };
 });
 vi.mock('$lib/materials/article.svelte', async (original) => {
   return { default : await wrapOriginal(original, { testId : 'article' }) };
@@ -323,6 +327,53 @@ describe('Post', () => {
     }));
   });
 
+  it('renders top links', async () => {
+    const config = {
+      ...defaultConfig,
+      weblog : {
+        ...defaultConfig.weblog,
+        topCredits : ['testA'],
+      },
+    };
+    const title = 'Test Title';
+    const body = 'Test Content';
+    const markdown = `# ${title}\n\n${body}`;
+    const rendered = [
+      `<h1 data-testid="article-title">${title}</h1>\n`,
+      `<p data-testid="article-content">${body}</p>`,
+    ];
+    const expectedLinks = [{ text : 'Tag 1', href : 'tag-1' }];
+    vi.mocked(extractArticle)
+      .mockReturnValue({ title : title, body : body });
+    vi.mocked(renderArticle).mockReturnValue(rendered);
+    setConfig(config);
+
+    const { container } = render(Post, {
+      content : markdown,
+      datePublished : new Date(),
+      topLinks : expectedLinks,
+      contributions : [{ slug : 'testA' } as Contribution],
+    });
+
+    const article = within(container).queryByTestId('article') as HTMLElement;
+    expect(article).toBeInTheDocument();
+    const dateline = within(article).queryByTestId('dateline');
+    expect(dateline).toBeInTheDocument();
+    const topLinks = within(article).queryByTestId('nav');
+    expect(topLinks).toBeInTheDocument();
+    const byline = within(article).queryByTestId('byline');
+    expect(byline).toBeInTheDocument();
+    expect(dateline?.compareDocumentPosition(topLinks!))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(topLinks?.compareDocumentPosition(byline!))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+
+    expect(NavLinks).toHaveBeenCalledOnce();
+    expect(NavLinks).toHaveBeenCalledWithProps(expect.objectContaining({
+      links : expectedLinks,
+    }));
+  });
+
   it('renders top credits', async () => {
     const config = {
       ...defaultConfig,
@@ -346,7 +397,7 @@ describe('Post', () => {
 
     const { container } = render(Post, {
       content : markdown,
-      datePublished : new Date(),
+      topLinks : [{ text : 'Test Link', href : '#test' }],
       contributions : [
         expectedContribution,
         { slug : 'testC' } as Contribution,
@@ -355,13 +406,13 @@ describe('Post', () => {
 
     const article = within(container).queryByTestId('article') as HTMLElement;
     expect(article).toBeInTheDocument();
-    const dateline = within(article).queryByTestId('dateline');
-    expect(dateline).toBeInTheDocument();
+    const topLinks = within(article).queryByTestId('nav');
+    expect(topLinks).toBeInTheDocument();
     const byline = within(article).queryByTestId('byline');
     expect(byline).toBeInTheDocument();
     const content = within(article).queryByTestId('article-content');
     expect(content).toBeInTheDocument();
-    expect(dateline?.compareDocumentPosition(byline!))
+    expect(topLinks?.compareDocumentPosition(byline!))
       .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(byline?.compareDocumentPosition(content!))
       .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
@@ -369,6 +420,52 @@ describe('Post', () => {
     expect(Byline).toHaveBeenCalledOnce();
     expect(Byline).toHaveBeenCalledWithProps(expect.objectContaining({
       contributions : [expectedContribution],
+    }));
+  });
+
+  it('renders bottom links', async () => {
+    const config = {
+      ...defaultConfig,
+      weblog : {
+        ...defaultConfig.weblog,
+        bottomCredits : ['testA'],
+      },
+    };
+    const title = 'Test Title';
+    const body = 'Test Content';
+    const markdown = `# ${title}\n\n${body}`;
+    const rendered = [
+      `<h1 data-testid="article-title">${title}</h1>\n`,
+      `<p data-testid="article-content">${body}</p>`,
+    ];
+    const expectedLinks = [{ text : 'Tag 1', href : 'tag-1' }];
+    vi.mocked(extractArticle)
+      .mockReturnValue({ title : title, body : body });
+    vi.mocked(renderArticle).mockReturnValue(rendered);
+    setConfig(config);
+
+    const { container } = render(Post, {
+      content : markdown,
+      bottomLinks : expectedLinks,
+      contributions : [{ slug : 'testA' } as Contribution],
+    });
+
+    const article = within(container).queryByTestId('article') as HTMLElement;
+    expect(article).toBeInTheDocument();
+    const content = within(article).queryByTestId('article-content');
+    expect(content).toBeInTheDocument();
+    const bottomLinks = within(article).queryByTestId('nav');
+    expect(bottomLinks).toBeInTheDocument();
+    const byline = within(article).queryByTestId('byline');
+    expect(byline).toBeInTheDocument();
+    expect(content?.compareDocumentPosition(bottomLinks!))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(bottomLinks?.compareDocumentPosition(byline!))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+
+    expect(NavLinks).toHaveBeenCalledOnce();
+    expect(NavLinks).toHaveBeenCalledWithProps(expect.objectContaining({
+      links : expectedLinks,
     }));
   });
 
@@ -387,6 +484,7 @@ describe('Post', () => {
       `<h1 data-testid="article-title">${title}</h1>\n`,
       `<p data-testid="article-content">${body}</p>`,
     ];
+    const links = [{ text : 'Tag 1', href : 'tag-1' }];
     const expectedContribution = { slug : 'testA' } as Contribution;
     vi.mocked(extractArticle)
       .mockReturnValue({ title : title, body : body });
@@ -396,6 +494,7 @@ describe('Post', () => {
     const { container } = render(Post, {
       content : markdown,
       datePublished : new Date(),
+      bottomLinks : links,
       contributions : [
         expectedContribution,
         { slug : 'testC' } as Contribution,
@@ -404,11 +503,11 @@ describe('Post', () => {
 
     const article = within(container).queryByTestId('article') as HTMLElement;
     expect(article).toBeInTheDocument();
-    const content = within(article).queryByTestId('article-content');
-    expect(content).toBeInTheDocument();
+    const bottomLinks = within(article).queryByTestId('nav');
+    expect(bottomLinks).toBeInTheDocument();
     const byline = within(article).queryByTestId('byline');
     expect(byline).toBeInTheDocument();
-    expect(content?.compareDocumentPosition(byline!))
+    expect(bottomLinks?.compareDocumentPosition(byline!))
       .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
 
     expect(Byline).toHaveBeenCalledOnce();

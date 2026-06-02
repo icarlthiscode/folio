@@ -2,13 +2,24 @@
   import Text from './text.svelte';
   import Link from './link.svelte';
 
-  const { links = [], direction = 'row', justify = 'start' } : {
+  const {
+    links = [],
+    direction = 'row',
+    justify = 'start',
+    compact = false,
+  } : {
     direction ?: 'row' | 'column';
     justify ?: 'start' | 'end';
+    compact ?: boolean;
     links : { text : string; href : string; }[];
   } = $props();
 
-  const className = $derived.by(() => `justify-${justify}`);
+  const typography = $derived(compact ? 'detail' : 'nav');
+  const className = $derived(
+    compact
+      ? `compact justify-${justify}`
+      : `justify-${justify}`,
+  );
 </script>
 
 {#if links.length > 0}
@@ -16,7 +27,7 @@
     <ul>
       {#each links as { text, href } (text)}
         <li>
-          <Text as="span" typography="nav">
+          <Text as="span" {typography}>
             <Link href={href} scrim>{ text }</Link>
           </Text>
         </li>
@@ -36,6 +47,11 @@
     margin: calc(var(--padding-inset) / 4) 0;
   }
 
+  .compact {
+    column-gap : var(--font-size);
+    row-gap : calc(var(--font-size) / 2);
+  }
+
   .justify-start {
     justify-content: flex-start;
   }
@@ -49,7 +65,7 @@
   }
 
   @media (max-width: 767px) {
-    nav {
+    nav:not(.compact) {
       flex-direction: column;
     }
 

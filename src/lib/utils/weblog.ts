@@ -20,6 +20,7 @@ export interface Article {
   title : string;
   datePublished : Date | null;
   contributions : Contribution[];
+  tags : { slug : string; name : string; }[];
   abstract : string;
 }
 
@@ -109,6 +110,7 @@ export function resolveWeblogIndex(data : unknown) : WeblogIndex {
       datePublished : dateValid ? proposedDate : null,
       contributions : articleContributions,
       abstract : `${article.abstract || ''}`,
+      tags : [], // defer tag assignment until validated
     };
   }
 
@@ -122,7 +124,10 @@ export function resolveWeblogIndex(data : unknown) : WeblogIndex {
       for (const a of tag.articles) {
         const articleSlug = `${a}`;
         const article = articles[articleSlug];
-        if (article) tagArticles.push(article);
+        if (!article) continue;
+        // resolve article tags
+        article.tags.push({ slug, name : tag.name });
+        tagArticles.push(article);
       }
     }
     tags[slug] = {

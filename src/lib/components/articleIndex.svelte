@@ -25,8 +25,9 @@
         title={article.title}
         abstract={article.abstract}
         link={`/articles/${article.slug}`}
-        {headingLevel}
         datePublished={article.datePublished}
+        tags={article.tags.filter(t => (t.slug !== tag))}
+        {headingLevel}
       />
     </Card>
   {/each}

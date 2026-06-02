@@ -66,6 +66,10 @@ describe('ArticleIndex', () => {
               abstract : 'This is article 1.',
               datePublished : null,
               contributions : [],
+              tags : [
+                { name : 'Test Tag', slug : 'test' },
+                { name : 'Alt Tag', slug : 'alt' },
+              ],
             },
             {
               slug : 'article-2',
@@ -73,6 +77,9 @@ describe('ArticleIndex', () => {
               abstract : 'This is article 2.',
               datePublished : null,
               contributions : [],
+              tags : [
+                { name : 'Test Tag', slug : 'test' },
+              ],
             },
           ],
         },
@@ -99,6 +106,54 @@ describe('ArticleIndex', () => {
     expect(Abstract).toHaveBeenCalledTimes(2);
   });
 
+  it('renders articles abstract with additional tags', async () => {
+    const index = {
+      articles : {},
+      tags : {
+        test : {
+          slug : 'test',
+          name : 'Test',
+          description : 'Test description.',
+          articles : [
+            {
+              slug : 'article-1',
+              title : 'Article 1',
+              abstract : 'This is article 1.',
+              datePublished : null,
+              contributions : [],
+              tags : [
+                { name : 'Test Tag', slug : 'test' },
+                { name : 'Alt Tag', slug : 'alt' },
+              ],
+            },
+            {
+              slug : 'article-2',
+              title : 'Article 2',
+              abstract : 'This is article 2.',
+              datePublished : null,
+              contributions : [],
+              tags : [
+                { name : 'Test Tag', slug : 'test' },
+              ],
+            },
+          ],
+        },
+      },
+    };
+    setIndex(index);
+
+    render(ArticleIndex, { tag : 'test' });
+
+    expect(Abstract).toHaveBeenCalledWithProps(expect.objectContaining({
+      title : index.tags.test?.articles[0]?.title,
+      tags : [index.tags.test?.articles[0]?.tags[1]],
+    }));
+    expect(Abstract).toHaveBeenCalledWithProps(expect.objectContaining({
+      title : index.tags.test?.articles[1]?.title,
+      tags : [],
+    }));
+  });
+
   it('renders article abstracts with specified heading level', async () => {
     const index = {
       articles : {},
@@ -114,6 +169,7 @@ describe('ArticleIndex', () => {
               abstract : 'This is article 1.',
               datePublished : null,
               contributions : [],
+              tags : [],
             },
           ],
         },
@@ -143,6 +199,7 @@ describe('ArticleIndex', () => {
               abstract : 'This is article 1.',
               datePublished : null,
               contributions : [],
+              tags : [],
             },
             {
               slug : 'article-2',
@@ -150,6 +207,7 @@ describe('ArticleIndex', () => {
               abstract : 'This is article 2.',
               datePublished : null,
               contributions : [],
+              tags : [],
             },
           ],
         },
@@ -187,6 +245,7 @@ describe('ArticleIndex', () => {
               abstract : 'This is article 1.',
               datePublished : null,
               contributions : [],
+              tags : [],
             },
             {
               slug : 'article-2',
@@ -194,6 +253,7 @@ describe('ArticleIndex', () => {
               abstract : 'This is article 2.',
               datePublished : null,
               contributions : [],
+              tags : [],
             },
           ],
         },

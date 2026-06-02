@@ -179,6 +179,56 @@ describe('resolveWeblogIndex', () => {
     });
   });
 
+  it('resolves article tags', () => {
+    const data = {
+      articles : {
+        'article-1' : {
+          title : 'Article 1',
+          abstract : 'This is a test article',
+        },
+        'article-2' : {
+          title : 'Article 2',
+          abstract : 'This is another test article',
+        },
+      },
+      tags : {
+        'tag-1' : {
+          name : 'Tag 1',
+          description : 'Tag 1 Description',
+          articles : ['article-1', 'article-2'],
+        },
+        'tag-2' : {
+          name : 'Tag 2',
+          description : 'Tag 2 Description',
+          articles : ['article-1'],
+        },
+      },
+    };
+    const expected = {
+      articles : {
+        'article-1' : expect.objectContaining({
+          slug : 'article-1',
+          title : 'Article 1',
+          abstract : 'This is a test article',
+          tags : [
+            { slug : 'tag-1', name : 'Tag 1' },
+            { slug : 'tag-2', name : 'Tag 2' },
+          ],
+        }),
+        'article-2' : expect.objectContaining({
+          slug : 'article-2',
+          title : 'Article 2',
+          abstract : 'This is another test article',
+          tags : [
+            { slug : 'tag-1', name : 'Tag 1' },
+          ],
+        }),
+      },
+    };
+    const actual = resolveWeblogIndex(data);
+    expect(actual).toEqual(expect.objectContaining(expected));
+  });
+
   it('resolves invalid tag name', () => {
     const index = resolveWeblogIndex({
       articles : {},

@@ -5,6 +5,21 @@ import { wrapOriginal } from '$lib/tests/component';
 import Post from './post.svelte';
 import Abstract from './abstract.svelte';
 
+const locale =
+  vi.hoisted(() => ({ collections : { tagPrefix : 'Tag:' } }));
+
+vi.mock('$lib/hooks/useLocale', async (original) => {
+  const originalDefault =
+    ((await original()) as { default : () => object; }).default;
+  const writable = (await import('svelte/store')).writable;
+  return {
+    default : () => ({
+      ...originalDefault(),
+      locale : writable<unknown>(locale),
+    }),
+  };
+});
+
 vi.mock('$lib/components/post.svelte', async (original) => {
   return { default : await wrapOriginal(original, { testId : 'post' }) };
 });
@@ -43,6 +58,24 @@ describe('Abstract', () => {
         datePublished : expectedDate,
         compact : true,
       }),
+    );
+  });
+
+  it('renders tag links below article content', async () => {
+    const expectedTags = [
+      { name : 'Tag 1', slug : 'tag1' },
+      { name : 'Tag 2', slug : 'tag2' },
+    ];
+    const expectedLinks = expectedTags.map(t => ({
+      text : locale.collections.tagPrefix + t.name,
+      href : `/collections/${t.slug}`,
+    }));
+
+    render(Abstract, { tags : expectedTags });
+
+    expect(Post).toHaveBeenCalledTimes(1);
+    expect(Post).toHaveBeenCalledWithProps(
+      expect.objectContaining({ bottomLinks : expectedLinks }),
     );
   });
 });

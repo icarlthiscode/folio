@@ -15,7 +15,28 @@ import ArticlePage from './+page.svelte';
 
 let isBrowser = vi.hoisted(() => true);
 
+const locale = vi.hoisted(() => ({
+  nav : {
+    home : 'Home',
+    allArticles : 'All Articles',
+    contact : 'Contact',
+  },
+  collections : { tagPrefix : 'Tag:' },
+}));
+
 vi.mock('$app/environment', () => ({ get browser() { return isBrowser; } }));
+
+vi.mock('$lib/hooks/useLocale', async (original) => {
+  const originalDefault =
+    ((await original()) as { default : () => object; }).default;
+  const writable = (await import('svelte/store')).writable;
+  return {
+    default : () => ({
+      ...originalDefault(),
+      locale : writable<unknown>(locale),
+    }),
+  };
+});
 
 vi.mock('$lib/materials/content.svelte', async (original) => {
   return {
@@ -97,6 +118,23 @@ describe('+page.svelte', () => {
       content : data.markdown,
       datePublished : data.metadata.datePublished,
       contributions : data.metadata.contributions,
+    }));
+  });
+
+  it('renders article content with tag links', () => {
+    const tags = [
+      { name : 'Tag 1', slug : 'tag-1' },
+      { name : 'Tag 2', slug : 'tag-2' },
+    ];
+    const expectedLinks = tags.map(t => ({
+      text : locale.collections.tagPrefix + t.name,
+      href : `/collections/${t.slug}`,
+    }));
+
+    render(ArticlePage, { data : { ...data, metadata : { tags } as Article } });
+    expect(Post).toHaveBeenCalledOnce();
+    expect(Post).toHaveBeenCalledWithProps(expect.objectContaining({
+      topLinks : expectedLinks,
     }));
   });
 
