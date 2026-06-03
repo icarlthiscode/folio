@@ -309,7 +309,7 @@ describe('Content', () => {
     expect(navBounds.top)
       .toBeCloseTo(containerBounds.top + (expectedPadding / 4), 1);
     expect(placeholderBounds.bottom)
-      .toBeCloseTo(containerBounds.bottom - expectedPadding, 1);
+      .toBeCloseTo(containerBounds.bottom - (expectedPadding / 2), 1);
 
     expect(layoutStyle.display).toBe('flex');
     expect(layoutStyle.flexDirection).toBe('column');
@@ -348,7 +348,7 @@ describe('Content', () => {
     const placeholderBounds = placeholder.getBoundingClientRect();
 
     expect(placeholderBounds.top)
-      .toBeCloseTo(containerBounds.top + expectedPadding, 1);
+      .toBeCloseTo(containerBounds.top + (expectedPadding / 2), 1);
     expect(navBounds.bottom)
       .toBeCloseTo(containerBounds.bottom - expectedPadding, 1);
 

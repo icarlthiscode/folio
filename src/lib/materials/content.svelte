@@ -23,9 +23,18 @@
 
   const { providerClasses } = (() => useThemes({ sectionKey : section }))();
 
+  const topOffset = $derived(
+    (!hasTopNav && hasBottomNav) && (justification === 'centre'),
+  );
+  const bottomOffset = $derived(
+    (hasTopNav && !hasBottomNav) && (justification === 'centre'),
+  );
+
   const classes = $derived.by(() => {
     const cls = ['layout'];
     if (hasTopNav) cls.push('top-nav');
+    if (topOffset) cls.push('top-offset');
+    if (bottomOffset) cls.push('bottom-offset');
     return cls;
   });
 
@@ -45,11 +54,11 @@
       style="--content-align: {align}; --content-justify: {justify};"
     >
       <!-- add placeholder to align vertically asymmetrical layout -->
-      {#if (!hasTopNav && hasBottomNav) && (justification === 'centre')}
+      {#if topOffset}
         <div class="placeholder"></div>
       {/if}
       {@render children?.()}
-      {#if (hasTopNav && !hasBottomNav) && (justification === 'centre')}
+      {#if bottomOffset}
         <div class="placeholder"></div>
       {/if}
     </div>
@@ -91,6 +100,16 @@
 
   .top-nav {
     padding-top: calc((var(--layout-spacing, 0) / 2 ) * var(--layout-scale, 1));
+  }
+
+  .top-offset {
+    /* offset for extra gap when centring asymmetric layouts*/
+    padding-top: calc(var(--layout-spacing, 0));
+  }
+
+  .bottom-offset {
+    /* offset for extra gap when centring asymmetric layouts*/
+    padding-bottom: calc(var(--layout-spacing, 0));
   }
 
   .placeholder {
