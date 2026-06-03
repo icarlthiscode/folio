@@ -123,4 +123,22 @@ describe('TitleCard', () => {
 
     expect(cardStyle.paddingRight).toBe('64px');
   });
+
+  it('renders with margin in narrow views', async () => {
+    await page.viewport(1023, 1024);
+
+    const { container } = render(TitleCard, {
+      title : 'Title Text',
+      subtitle : 'Subtitle Text',
+    });
+
+    container.style.setProperty('--layout-spacing', '64px');
+
+    const card = container.children[0] as HTMLElement;
+    await expect.element(card).toBeInTheDocument();
+
+    const cardStyle = getComputedStyle(card);
+
+    expect(cardStyle.marginTop).toBe('64px');
+  });
 });

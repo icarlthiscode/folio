@@ -29,6 +29,7 @@
     align-items: flex-start;
     width: fit-content;
     min-width: 200px;
+    margin: 0;
     padding-right: calc(var(--layout-spacing) * var(--is-wide, 0));
   }
 
@@ -55,5 +56,11 @@
     transition-property: width, height, top, right;
     transition-duration: var(--transition-fast);
     transition-timing-function: var(--transition-ease);
+  }
+
+  @media(768px <= width < 1024px) {
+    .card {
+      margin-top: var(--layout-spacing);
+    }
   }
 </style>
