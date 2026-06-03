@@ -21,7 +21,7 @@
 </script>
 
 <Content section="article" hasTopNav showBackground={browser}>
-  <Nav home highlights allArticles contact />
+  <Nav home allArticles contact />
   <Post
     content={data.markdown}
     topLinks={tagLinks}

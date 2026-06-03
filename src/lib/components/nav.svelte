@@ -6,10 +6,12 @@
   const {
     home = false,
     highlights = false,
+    allArticles = false,
     contact = false,
   } : {
     home ?: boolean;
     highlights ?: boolean;
+    allArticles ?: boolean;
     contact ?: boolean;
   } = $props();
 
@@ -24,6 +26,9 @@
         if (!text) continue;
         ln.push({ text, href : `/#${highlight.id}` });
       }
+    }
+    if (allArticles) {
+      ln.push({ text : $locale.nav.allArticles, href : '/collections' });
     }
     if (home) ln.push({ text : $locale.nav.home, href : '/' });
     if (contact) ln.push({ text : $locale.nav.contact, href : '/#contact' });

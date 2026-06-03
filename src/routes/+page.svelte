@@ -24,7 +24,7 @@
   justification="centre"
   showBackground={browser}
 >
-  <Nav highlights contact/>
+  <Nav highlights allArticles contact/>
   <Profile />
 </Content>
 {#each highlights as highlight (highlight.id)}

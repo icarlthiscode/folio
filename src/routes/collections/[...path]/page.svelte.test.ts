@@ -91,7 +91,7 @@ describe('+page.svelte', () => {
     }));
   });
 
-  it('renders collection main navigation', () => {
+  it('renders all articles main navigation', () => {
     const { container } = render(CollectionPage, { data });
 
     const content = within(container)
@@ -103,6 +103,30 @@ describe('+page.svelte', () => {
     expect(Nav).toHaveBeenCalledOnce();
     expect(Nav).toHaveBeenCalledWithProps(expect.objectContaining({
       home : true,
+      contact : true,
+    }));
+    expect(Nav).not.toHaveBeenCalledWithProps(expect.objectContaining({
+      allArticles : true,
+      highlights : true,
+    }));
+  });
+
+  it('renders tag collection main navigation', () => {
+    const { container } = render(CollectionPage, { data : {
+      ...data,
+      tag : { name : 'Test Tag 1' } as Tag,
+    } });
+
+    const content = within(container)
+      .queryByTestId('content-collection') as HTMLElement;
+    expect(content).toBeInTheDocument();
+    const nav = within(content).queryByTestId('nav') as HTMLElement;
+    expect(nav).toBeInTheDocument();
+
+    expect(Nav).toHaveBeenCalledOnce();
+    expect(Nav).toHaveBeenCalledWithProps(expect.objectContaining({
+      home : true,
+      allArticles : true,
       contact : true,
     }));
     expect(Nav).not.toHaveBeenCalledWithProps(expect.objectContaining({

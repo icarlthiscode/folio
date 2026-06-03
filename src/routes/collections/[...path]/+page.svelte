@@ -32,7 +32,7 @@
 </script>
 
 <Content section="collection" hasTopNav showBackground={browser}>
-  <Nav home contact />
+  <Nav home allArticles={!!data.tag} contact />
   <Heading level={1} {id} scrim>{name}</Heading>
   <NavLinks {links}/>
   <ArticleIndex tag={slug}/>
