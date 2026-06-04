@@ -26,7 +26,7 @@
 
 <Heading id={highlight.id} level={2} scrim>{title}</Heading>
 {#if highlight.type === 'tag'}
-  <ArticleIndex tag={highlight.key} />
+  <ArticleIndex tag={highlight.key} maxCount={highlight.count} />
 {/if}
 {#if highlight.type === 'article'}
   <Post

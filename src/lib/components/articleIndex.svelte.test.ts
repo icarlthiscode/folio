@@ -106,6 +106,48 @@ describe('ArticleIndex', () => {
     expect(Abstract).toHaveBeenCalledTimes(2);
   });
 
+  it('does not render more articles than max count', async () => {
+    const expectedCount = 1;
+    const index = {
+      articles : {},
+      tags : {
+        test : {
+          slug : 'test',
+          name : 'Test',
+          description : 'Test description.',
+          articles : [
+            {
+              slug : 'article-1',
+              title : 'Article 1',
+              abstract : 'This is article 1.',
+              datePublished : null,
+              contributions : [],
+              tags : [
+                { name : 'Test Tag', slug : 'test' },
+                { name : 'Alt Tag', slug : 'alt' },
+              ],
+            },
+            {
+              slug : 'article-2',
+              title : 'Article 2',
+              abstract : 'This is article 2.',
+              datePublished : null,
+              contributions : [],
+              tags : [
+                { name : 'Test Tag', slug : 'test' },
+              ],
+            },
+          ],
+        },
+      },
+    };
+    setIndex(index);
+
+    render(ArticleIndex, { tag : 'test', maxCount : expectedCount });
+
+    expect(Abstract).toHaveBeenCalledTimes(expectedCount);
+  });
+
   it('renders articles abstract with additional tags', async () => {
     const index = {
       articles : {},

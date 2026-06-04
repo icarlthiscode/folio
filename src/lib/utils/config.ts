@@ -2,6 +2,7 @@ export interface Highlight {
   id : string;
   type : 'article' | 'tag';
   key : string;
+  count : number | null;
   links : { href : string; text : string; }[];
   title : string;
   section : string;
@@ -75,6 +76,9 @@ export function buildConfig(config : unknown) : Config {
       return true;
     }).map((item) => {
       const newItem = { ...item };
+      if (!('count' in item) || typeof item.count !== 'number') {
+        newItem.count = null;
+      }
       if (!('title' in item) || typeof item.title !== 'string') {
         newItem.title = '';
       }

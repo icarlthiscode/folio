@@ -48,6 +48,7 @@ describe('Highlight', () => {
       id : 'test-highlight',
       type : 'tag' as const,
       key : 'test',
+      count : null,
       title : 'Test Tag Title',
       links : [],
       section : 'highlightTest',
@@ -80,6 +81,7 @@ describe('Highlight', () => {
       id : 'test-highlight',
       type : 'article' as const,
       key : 'test',
+      count : null,
       title : 'Test Tag Title',
       links : [],
       section : 'highlightTest',
@@ -111,6 +113,7 @@ describe('Highlight', () => {
       id : 'test-highlight',
       type : 'tag' as const,
       key : 'test',
+      count : null,
       title : '',
       links : [],
       section : 'highlightTest',
@@ -136,6 +139,7 @@ describe('Highlight', () => {
       id : 'test-highlight',
       type : 'tag' as const,
       key : 'test',
+      count : 42,
       title : 'Test Tag Title',
       links : [],
       section : 'highlightTest',
@@ -148,7 +152,10 @@ describe('Highlight', () => {
 
     expect(ArticleIndex).toHaveBeenCalledOnce();
     expect(ArticleIndex).toHaveBeenCalledWithProps(
-      expect.objectContaining({ tag : highlight.key }),
+      expect.objectContaining({
+        tag : highlight.key,
+        maxCount : highlight.count,
+      }),
     );
     expect(Post).not.toHaveBeenCalled();
   });
@@ -159,6 +166,7 @@ describe('Highlight', () => {
       id : 'test-highlight',
       type : 'article' as const,
       key : 'test',
+      count : null,
       title : 'Test Tag Title',
       links : [{ text : '', href : '' }],
       section : 'highlightTest',
@@ -192,6 +200,7 @@ describe('Highlight', () => {
       id : 'test-highlight',
       type : 'tag' as const,
       key : 'test',
+      count : null,
       title : 'Test Tag Title',
       links : [{ text : 'Test Link', href : '#test' }],
       section : 'highlightTest',
@@ -219,6 +228,7 @@ describe('Highlight', () => {
       id : 'test-highlight',
       type : 'article' as const,
       key : 'test',
+      count : null,
       title : 'Test Tag Title',
       links : [{ text : '', href : '' }],
       section : 'highlightTest',
