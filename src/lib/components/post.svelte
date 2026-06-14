@@ -43,6 +43,9 @@
     };
   });
 
+  const link = $derived(
+    heading?.href && heading.href !== '#' ? heading.href : null,
+  );
   const topCredits = $derived(
     contributions.filter(c => $config.weblog?.topCredits.includes(c.slug)),
   );
@@ -54,8 +57,8 @@
 <Article>
   {#if heading}
     <Heading level={heading.level ?? 1}>
-      {#if heading.href}
-        <Link href={heading.href}>{ heading.text }</Link>
+      {#if link}
+        <Link href={link}>{ heading.text }</Link>
       {:else}
         { heading.text }
       {/if}

@@ -205,6 +205,37 @@ describe('Post', () => {
     expect(Article).toHaveBeenCalledOnce();
   });
 
+  it.each(['', '#'])(
+    'it render heading without empty heading link',
+    async (link) => {
+      const expectedTitle = 'Test Title';
+      const expectedArticleTitle = 'Alt Test Title';
+      const expectedBody = 'Test Content';
+      const expectedMarkdown = [
+        `# ${expectedArticleTitle}\n\n`,
+        `${expectedBody}`,
+      ];
+      const expectedContent = expectedMarkdown.join('');
+      const expectedHeadingLevel = 2;
+
+      const { container } = render(Post, {
+        content : expectedContent,
+        heading : {
+          text : expectedTitle,
+          href : link,
+          level : expectedHeadingLevel,
+        },
+      });
+
+      const heading = within(container).queryByTestId('heading') as HTMLElement;
+      expect(heading).toBeInTheDocument();
+      expect(heading).toHaveTextContent(expectedTitle);
+
+      expect(Heading).toHaveBeenCalledOnce();
+      expect(Link).not.toHaveBeenCalled();
+    },
+  );
+
   it('renders content article', async () => {
     const expectedContent = 'Test Article';
     const expectedRender =

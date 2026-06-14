@@ -29,7 +29,7 @@
       <Abstract
         title={article.title}
         abstract={article.abstract}
-        link={`/articles/${article.slug}`}
+        link={article.canonicalRef ?? `/articles/${article.slug}`}
         datePublished={article.datePublished}
         tags={article.tags.filter(t => (t.slug !== tag))}
         {headingLevel}

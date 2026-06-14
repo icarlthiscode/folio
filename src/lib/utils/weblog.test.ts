@@ -32,6 +32,16 @@ describe('resolveWeblogIndex', () => {
     }));
   });
 
+  it('drops invalid article abstract', () => {
+    const index = resolveWeblogIndex({
+      articles : { 'article-1' : { canonicalRef : 1 } },
+      tags : {},
+    });
+    expect(index.articles).toEqual(expect.objectContaining({
+      ['article-1'] : expect.objectContaining({ canonicalRef : undefined }),
+    }));
+  });
+
   it('resolves invalid article abstract', () => {
     const index = resolveWeblogIndex({
       articles : { 'article-1' : { abstract : 1 } },

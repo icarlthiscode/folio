@@ -17,6 +17,7 @@ export interface Contribution {
 
 export interface Article {
   slug : string;
+  canonicalRef : string | undefined;
   title : string;
   datePublished : Date | null;
   contributions : Contribution[];
@@ -106,6 +107,9 @@ export function resolveWeblogIndex(data : unknown) : WeblogIndex {
     const dateValid = !Number.isNaN(proposedDate.getTime());
     articles[slug] = {
       slug,
+      canonicalRef : typeof article.canonicalRef === 'string'
+        ? article.canonicalRef
+        : undefined,
       title : `${article.title || ''}`,
       datePublished : dateValid ? proposedDate : null,
       contributions : articleContributions,
