@@ -15,6 +15,18 @@ import Contact from '$lib/components/contact.svelte';
 import type { PageData } from './$types';
 import HomePage from './+page.svelte';
 
+const baseHighlight = {
+  id : '1',
+  type : 'article',
+  key : 'test',
+  count : null,
+  title : '',
+  intro : '',
+  outro : '',
+  links : [],
+  section : 'exampleSection',
+};
+
 const defaultConfig = vi.hoisted(() => ({} as Config));
 const defaultData = {
   articles : {},
@@ -214,21 +226,17 @@ describe('+page.svelte', () => {
   it('renders configured highlights', async () => {
     const expectedHighlights = [
       {
+        ...baseHighlight,
         id : '1',
         type : 'article' as const,
         key : 'example1',
-        title : '',
-        count : null,
-        links : [],
         section : 'exampleSection1',
       },
       {
+        ...baseHighlight,
         id : '2',
         type : 'tag' as const,
         key : 'example2',
-        count : null,
-        title : '',
-        links : [],
         section : 'exampleSection2',
       },
     ];
@@ -269,12 +277,10 @@ describe('+page.svelte', () => {
       ...defaultConfig,
       highlights : [
         {
+          ...baseHighlight,
           id : '1',
           type : 'article',
           key : expectedKey,
-          count : null,
-          title : '',
-          links : [],
           section : 'exampleSection',
         },
       ],
@@ -342,12 +348,11 @@ describe('+page.svelte', () => {
       ...defaultConfig,
       highlights : [
         {
+          ...baseHighlight,
           id : '1',
           type : 'tag',
           key : 'example',
-          count : null,
           title : 'Example',
-          links : [],
           section : 'exampleSection',
         },
       ],

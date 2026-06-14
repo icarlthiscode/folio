@@ -5,6 +5,8 @@ export interface Highlight {
   count : number | null;
   links : { href : string; text : string; }[];
   title : string;
+  intro : string;
+  outro : string;
   section : string;
 }
 
@@ -81,6 +83,12 @@ export function buildConfig(config : unknown) : Config {
       }
       if (!('title' in item) || typeof item.title !== 'string') {
         newItem.title = '';
+      }
+      if (!('intro' in item) || typeof item.intro !== 'string') {
+        newItem.intro = '';
+      }
+      if (!('outro' in item) || typeof item.outro !== 'string') {
+        newItem.outro = '';
       }
       if (!('section' in item) || typeof item.section !== 'string') {
         newItem.section = '';

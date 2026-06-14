@@ -209,6 +209,48 @@ describe('config highlights', () => {
     }));
   });
 
+  it('replaces invalid highlight intro', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [
+        {
+          id : 'art1',
+          type : 'article',
+          key : 'art1',
+          intro : 'Test introduction.',
+        },
+        { id : 'art2', type : 'article', key : 'art2', intro : 42 },
+      ],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'art1', intro : 'Test introduction.' }),
+        expect.objectContaining({ id : 'art2', intro : '' }),
+      ],
+    }));
+  });
+
+  it('replaces invalid highlight outro', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [
+        {
+          id : 'art1',
+          type : 'article',
+          key : 'art1',
+          outro : 'Test conclusion.',
+        },
+        { id : 'art2', type : 'article', key : 'art2', intro : 42 },
+      ],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'art1', outro : 'Test conclusion.' }),
+        expect.objectContaining({ id : 'art2', outro : '' }),
+      ],
+    }));
+  });
+
   it('replaces invalid highlight section', () => {
     const config = buildConfig({
       ...testConfig,

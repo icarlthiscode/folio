@@ -2,17 +2,43 @@ import { beforeEach, afterAll, describe, it, expect, vi } from 'vitest';
 import { render, within } from '@testing-library/svelte';
 
 import { wrapOriginal } from '$lib/tests/component';
-import type { Article } from '$lib/utils/weblog';
+import type { Article, WeblogIndex } from '$lib/utils/weblog';
 import Heading from '$lib/materials/heading.svelte';
 import NavLinks from '$lib/materials/navLinks.svelte';
 import ArticleIndex from './articleIndex.svelte';
 import Post from './post.svelte';
 import Highlight from './highlight.svelte';
 
+const baseHighlight = {
+  id : 'test-highlight',
+  type : 'tag' as const,
+  key : 'test',
+  count : null,
+  title : 'Test Tag Title',
+  intro : '',
+  outro : '',
+  links : [],
+  section : 'highlightTest',
+};
+
+const baseArticle : Article = {
+  slug : 'test',
+  canonicalRef : undefined,
+  title : 'Test Article',
+  abstract : 'This is a test article.',
+  datePublished : null,
+  contributions : [],
+  tags : [],
+};
+
 const defaultLocale = vi.hoisted(() => ({
   highlights : { defaultHeading : 'Test Default Heading' },
   collections : { },
 }));
+
+const defaultIndex =
+  vi.hoisted(() => ({ articles : {}, tags : {} } as WeblogIndex));
+let setIndex : ((value : WeblogIndex) => void) = vi.hoisted(() => () => {});
 
 vi.mock('$lib/hooks/useLocale', async (original) => {
   const originalDefault =
@@ -22,6 +48,20 @@ vi.mock('$lib/hooks/useLocale', async (original) => {
     default : () => ({
       ...originalDefault(),
       locale : writable(defaultLocale),
+    }),
+  };
+});
+
+vi.mock('$lib/hooks/useArticles', async (original) => {
+  const originalDefault =
+    ((await original()) as { default : () => object; }).default;
+  const writable = (await import('svelte/store')).writable;
+  const index = writable<WeblogIndex>();
+  setIndex = (value : WeblogIndex) => index.set(value);
+  return {
+    default : () => ({
+      ...originalDefault(),
+      index,
     }),
   };
 });
@@ -39,19 +79,18 @@ vi.mock('$lib/components/post.svelte', async (original) => {
   return { default : await wrapOriginal(original, { testId : 'post' }) };
 });
 
-beforeEach(() => { vi.clearAllMocks(); });
+beforeEach(() => {
+  vi.clearAllMocks();
+  setIndex({ ...defaultIndex });
+});
+
 afterAll(() => { vi.restoreAllMocks(); });
 
 describe('Highlight', () => {
   it('renders tag highlight heading', () => {
     const highlight = {
+      ...baseHighlight,
       id : 'test-highlight',
-      type : 'tag' as const,
-      key : 'test',
-      count : null,
-      title : 'Test Tag Title',
-      links : [],
-      section : 'highlightTest',
     };
     const { container } = render(Highlight, { highlight });
 
@@ -78,13 +117,9 @@ describe('Highlight', () => {
 
   it('renders article highlight heading', () => {
     const highlight = {
+      ...baseHighlight,
       id : 'test-highlight',
       type : 'article' as const,
-      key : 'test',
-      count : null,
-      title : 'Test Tag Title',
-      links : [],
-      section : 'highlightTest',
     };
     const { container } = render(Highlight, { highlight });
 
@@ -110,13 +145,9 @@ describe('Highlight', () => {
 
   it('renders default heading', () => {
     const highlight = {
+      ...baseHighlight,
       id : 'test-highlight',
-      type : 'tag' as const,
-      key : 'test',
-      count : null,
       title : '',
-      links : [],
-      section : 'highlightTest',
     };
     const { container } = render(Highlight, { highlight });
 
@@ -136,13 +167,10 @@ describe('Highlight', () => {
 
   it('renders article index with highlight tag', async () => {
     const highlight = {
+      ...baseHighlight,
       id : 'test-highlight',
       type : 'tag' as const,
-      key : 'test',
       count : 42,
-      title : 'Test Tag Title',
-      links : [],
-      section : 'highlightTest',
     };
     const { container } = render(Highlight, { highlight });
 
@@ -160,16 +188,101 @@ describe('Highlight', () => {
     expect(Post).not.toHaveBeenCalled();
   });
 
+  it('renders article index introduction', async () => {
+    const highlight = {
+      ...baseHighlight,
+      id : 'test-highlight',
+      type : 'tag' as const,
+      intro : 'test-intro',
+    };
+    const expectedContent = 'Test introduction';
+    setIndex({
+      articles : { [highlight.intro] : {
+        ...baseArticle,
+        abstract : expectedContent,
+      } },
+      tags : {},
+    });
+
+    const { container } = render(Highlight, { highlight });
+
+    const heading = within(container)
+      .queryByTestId('heading') as HTMLElement;
+    expect(heading).toBeInTheDocument();
+    const intro = within(container).queryByTestId('post') as HTMLElement;
+    expect(intro).toBeInTheDocument();
+    const index = within(container)
+      .queryByTestId('index') as HTMLElement;
+    expect(index).toBeInTheDocument();
+    expect(intro.compareDocumentPosition(heading))
+      .toBe(Node.DOCUMENT_POSITION_PRECEDING);
+    expect(intro.compareDocumentPosition(index))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+
+    expect(ArticleIndex).toHaveBeenCalledOnce();
+    expect(ArticleIndex).toHaveBeenCalledWithProps(
+      expect.objectContaining({
+        tag : highlight.key,
+        maxCount : highlight.count,
+      }),
+    );
+    expect(Post).toHaveBeenCalledOnce();
+    expect(Post).toHaveBeenCalledWithProps(
+      expect.objectContaining({ content : expectedContent }),
+    );
+  });
+
+  it('renders article index conclusion', async () => {
+    const highlight = {
+      ...baseHighlight,
+      id : 'test-highlight',
+      type : 'tag' as const,
+      outro : 'test-outro',
+      links : [{ text : 'Test Link', href : '#test' }],
+    };
+    const expectedContent = 'Test introduction';
+    setIndex({
+      articles : { [highlight.outro] : {
+        ...baseArticle,
+        abstract : expectedContent,
+      } },
+      tags : {},
+    });
+
+    const { container } = render(Highlight, { highlight });
+
+    const index = within(container)
+      .queryByTestId('index') as HTMLElement;
+    expect(index).toBeInTheDocument();
+    const outro = within(container).queryByTestId('post') as HTMLElement;
+    expect(outro).toBeInTheDocument();
+    const links = within(container)
+      .queryByTestId('nav') as HTMLElement;
+    expect(links).toBeInTheDocument();
+    expect(outro.compareDocumentPosition(index))
+      .toBe(Node.DOCUMENT_POSITION_PRECEDING);
+    expect(outro.compareDocumentPosition(links))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+
+    expect(ArticleIndex).toHaveBeenCalledOnce();
+    expect(ArticleIndex).toHaveBeenCalledWithProps(
+      expect.objectContaining({
+        tag : highlight.key,
+        maxCount : highlight.count,
+      }),
+    );
+    expect(Post).toHaveBeenCalledOnce();
+    expect(Post).toHaveBeenCalledWithProps(
+      expect.objectContaining({ content : expectedContent }),
+    );
+  });
+
   it('renders post with highlight article', async () => {
     const expectedContent = 'Test Article Content';
     const highlight = {
+      ...baseHighlight,
       id : 'test-highlight',
       type : 'article' as const,
-      key : 'test',
-      count : null,
-      title : 'Test Tag Title',
-      links : [{ text : '', href : '' }],
-      section : 'highlightTest',
     };
     const expectedMetadata = {
       datePublished : new Date(),
@@ -197,13 +310,10 @@ describe('Highlight', () => {
 
   it('renders article index links', async () => {
     const highlight = {
+      ...baseHighlight,
       id : 'test-highlight',
       type : 'tag' as const,
-      key : 'test',
-      count : null,
-      title : 'Test Tag Title',
       links : [{ text : 'Test Link', href : '#test' }],
-      section : 'highlightTest',
     };
     const { container } = render(Highlight, { highlight });
 
@@ -225,13 +335,11 @@ describe('Highlight', () => {
   it('renders article links', async () => {
     const expectedContent = 'Test Article Content';
     const highlight = {
+      ...baseHighlight,
       id : 'test-highlight',
       type : 'article' as const,
       key : 'test',
-      count : null,
-      title : 'Test Tag Title',
       links : [{ text : '', href : '' }],
-      section : 'highlightTest',
     };
     const expectedMetadata = {
       datePublished : new Date(),
