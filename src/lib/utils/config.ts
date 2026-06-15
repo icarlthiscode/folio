@@ -1,3 +1,5 @@
+export type NavTarget = 'home' | 'highlights' | 'allArticles' | 'contact';
+
 export interface Highlight {
   id : string;
   type : 'article' | 'tag';
@@ -11,6 +13,11 @@ export interface Highlight {
 }
 
 export interface Config {
+  nav : {
+    home : NavTarget[];
+    collection : NavTarget[];
+    article : NavTarget[];
+  };
   likes : { icon : string; text : string; }[] | null;
   dislikes : { icon : string; text : string; }[] | null;
   profileLinks : { text : string; href : string; }[] | null;
@@ -29,6 +36,11 @@ export interface Config {
 }
 
 export const defaultConfig : Config = {
+  nav : {
+    home : ['highlights', 'allArticles', 'contact'],
+    collection : ['home', 'allArticles', 'contact'],
+    article : ['home', 'allArticles', 'contact'],
+  },
   likes : null,
   dislikes : null,
   highlights : null,
@@ -40,6 +52,20 @@ export const defaultConfig : Config = {
 export function buildConfig(config : unknown) : Config {
   if (typeof config !== 'object' || config === null) return defaultConfig;
   const conf = { ...config } as Config;
+
+  if (!conf.nav || (typeof conf.nav !== 'object')) {
+    conf.nav = defaultConfig.nav;
+  } else {
+    if (!('home' in conf.nav) || !Array.isArray(conf.nav.home)) {
+      conf.nav.home = defaultConfig.nav.home;
+    }
+    if (!('collection' in conf.nav) || !Array.isArray(conf.nav.collection)) {
+      conf.nav.collection = defaultConfig.nav?.collection;
+    }
+    if (!('article' in conf.nav) || !Array.isArray(conf.nav.article)) {
+      conf.nav.article = defaultConfig.nav?.article;
+    };
+  }
 
   if (!Array.isArray((conf.likes))) {
     conf.likes = defaultConfig.likes;

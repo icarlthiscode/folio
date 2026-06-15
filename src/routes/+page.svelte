@@ -13,7 +13,8 @@
   const { config } = useConfig();
   const { locale } = useLocale();
 
-  const highlights = $config.highlights ?? [];
+  const highlights = $derived($config.highlights ?? []);
+  const navTargets = $derived($config.nav?.home.filter(t => t !== 'home'));
 </script>
 
 <Content
@@ -24,7 +25,8 @@
   justification="centre"
   showBackground={browser}
 >
-  <Nav highlights allArticles contact/>
+
+<Nav targets={navTargets}/>
   <Profile />
 </Content>
 {#each highlights as highlight (highlight.id)}

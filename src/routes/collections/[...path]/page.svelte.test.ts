@@ -16,10 +16,24 @@ import Footer from '$lib/components/footer.svelte';
 import CollectionPage from './+page.svelte';
 
 let isBrowser = vi.hoisted(() => true);
+let setConfig : ((value : unknown) => void) = vi.hoisted(() => () => {});
 let setLocale : ((value : unknown) => void) = vi.hoisted(() => () => {});
 
 vi.mock('$app/environment', () => ({ get browser() { return isBrowser; } }));
 
+vi.mock('$lib/hooks/useConfig', async (original) => {
+  const originalDefault =
+    ((await original()) as { default : () => object; }).default;
+  const writable = (await import('svelte/store')).writable;
+  const config = writable<unknown>();
+  setConfig = (value : unknown) => config.set(value);
+  return {
+    default : () => ({
+      ...originalDefault(),
+      config,
+    }),
+  };
+});
 vi.mock('$lib/hooks/useLocale', async (original) => {
   const originalDefault =
     ((await original()) as { default : () => object; }).default;
@@ -78,6 +92,7 @@ const data = {
 beforeEach(() => {
   vi.clearAllMocks();
   isBrowser = true;
+  setConfig(defaultConfig);
   setLocale(defaultLocale);
 });
 afterAll(() => { vi.restoreAllMocks(); });
@@ -91,7 +106,14 @@ describe('+page.svelte', () => {
     }));
   });
 
-  it('renders all articles main navigation', () => {
+  it('renders all articles main navigation with configured targets', () => {
+    const expectedTargets = ['home', 'contact'];
+    setConfig({
+      ...defaultConfig,
+      nav : {
+        ...defaultConfig.nav,
+        collection : ['allArticles', ...expectedTargets] },
+    });
     const { container } = render(CollectionPage, { data });
 
     const content = within(container)
@@ -102,16 +124,16 @@ describe('+page.svelte', () => {
 
     expect(Nav).toHaveBeenCalledOnce();
     expect(Nav).toHaveBeenCalledWithProps(expect.objectContaining({
-      home : true,
-      contact : true,
-    }));
-    expect(Nav).not.toHaveBeenCalledWithProps(expect.objectContaining({
-      allArticles : true,
-      highlights : true,
+      targets : expectedTargets,
     }));
   });
 
-  it('renders tag collection main navigation', () => {
+  it('renders tag collection main navigation with configured targets', () => {
+    const expectedTargets = ['home', 'allArticles', 'contact'];
+    setConfig({
+      ...defaultConfig,
+      nav : { ...defaultConfig.nav, collection : expectedTargets },
+    });
     const { container } = render(CollectionPage, { data : {
       ...data,
       tag : { name : 'Test Tag 1' } as Tag,
@@ -125,12 +147,7 @@ describe('+page.svelte', () => {
 
     expect(Nav).toHaveBeenCalledOnce();
     expect(Nav).toHaveBeenCalledWithProps(expect.objectContaining({
-      home : true,
-      allArticles : true,
-      contact : true,
-    }));
-    expect(Nav).not.toHaveBeenCalledWithProps(expect.objectContaining({
-      highlights : true,
+      targets : expectedTargets,
     }));
   });
 

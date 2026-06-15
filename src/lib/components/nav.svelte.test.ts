@@ -70,7 +70,7 @@ describe('Nav', () => {
   });
 
   it('populates nav links with highlights from config', () => {
-    const { container } = render(Nav, { highlights : true });
+    const { container } = render(Nav, { targets : ['highlights'] });
 
     const navLinks = within(container).queryByTestId('navLinks') as HTMLElement;
     expect(navLinks).toBeInTheDocument();
@@ -85,7 +85,7 @@ describe('Nav', () => {
   });
 
   it('populates nav links with all articles locale', () => {
-    const { container } = render(Nav, { allArticles : true });
+    const { container } = render(Nav, { targets : ['allArticles'] });
 
     const navLinks = within(container).queryByTestId('navLinks') as HTMLElement;
     expect(navLinks).toBeInTheDocument();
@@ -97,8 +97,7 @@ describe('Nav', () => {
   });
 
   it('populates nav links with home locale', () => {
-    const { container } = render(Nav, { home : true });
-
+    const { container } = render(Nav, { targets : ['home'] });
     const navLinks = within(container).queryByTestId('navLinks') as HTMLElement;
     expect(navLinks).toBeInTheDocument();
 
@@ -109,7 +108,7 @@ describe('Nav', () => {
   });
 
   it('populates nav links with contact locale', () => {
-    const { container } = render(Nav, { contact : true });
+    const { container } = render(Nav, { targets : ['contact'] });
 
     const navLinks = within(container).queryByTestId('navLinks') as HTMLElement;
     expect(navLinks).toBeInTheDocument();
@@ -121,12 +120,12 @@ describe('Nav', () => {
   });
 
   it('lists links in correct order', () => {
-    const { container } = render(Nav, {
-      home : true,
-      highlights : true,
-      allArticles : true,
-      contact : true,
-    });
+    const { container } = render(Nav, { targets : [
+      'home',
+      'highlights',
+      'allArticles',
+      'contact',
+    ] });
 
     const navLinks = within(container).queryByTestId('navLinks') as HTMLElement;
     expect(navLinks).toBeInTheDocument();

@@ -1,5 +1,6 @@
 <script>
   import { browser } from '$app/environment';
+  import useConfig from '$lib/hooks/useConfig.js';
   import useLocale from '$lib/hooks/useLocale.js';
   import Content from '$lib/materials/content.svelte';
   import Nav from '$lib/components/nav.svelte';
@@ -8,6 +9,7 @@
 
   const { data } = $props();
 
+  const { config } = useConfig();
   const { locale } = useLocale();
 
   const description = $derived((data?.abstract ?? '')
@@ -21,7 +23,7 @@
 </script>
 
 <Content section="article" hasTopNav showBackground={browser}>
-  <Nav home allArticles contact />
+  <Nav targets={$config.nav.article}/>
   <Post
     content={data.markdown}
     topLinks={tagLinks}

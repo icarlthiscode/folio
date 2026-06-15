@@ -14,6 +14,54 @@ describe('config', () => {
   });
 });
 
+describe('config nav', () => {
+  it.each([
+    'home',
+    'collection',
+    'article',
+  ] as const)('returns valid nav targets', (navTarget) => {
+    const config = buildConfig({
+      ...testConfig,
+      nav : { [navTarget] : ['allArticles'] },
+    });
+    expect(config).toEqual(expect.objectContaining({
+      nav : expect.objectContaining({ [navTarget] : ['allArticles'] }),
+    }));
+  });
+
+  it.each([
+    'home',
+    'collection',
+    'article',
+  ] as const)('defaults missing nav targets', (navTarget) => {
+    const config = buildConfig({
+      ...testConfig,
+      nav : {},
+    });
+    expect(config).toEqual(expect.objectContaining({
+      nav : expect.objectContaining({
+        [navTarget] : defaultConfig.nav[navTarget],
+      }),
+    }));
+  });
+
+  it.each([
+    'home',
+    'collection',
+    'article',
+  ] as const)('defaults invalid nav targets', (navTarget) => {
+    const config = buildConfig({
+      ...testConfig,
+      nav : { [navTarget] : 42 },
+    });
+    expect(config).toEqual(expect.objectContaining({
+      nav : expect.objectContaining({
+        [navTarget] : defaultConfig.nav[navTarget],
+      }),
+    }));
+  });
+});
+
 describe('config likes', () => {
   it('returns config with valid likes', () => {
     const config = buildConfig({

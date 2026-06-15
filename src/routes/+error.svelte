@@ -13,6 +13,6 @@
   hasTopNav
   showBackground={browser}
 >
-  <Nav home contact />
+  <Nav targets={['home']} />
   <HttpError status={page.status} message={page.error?.message} />
 </Content>

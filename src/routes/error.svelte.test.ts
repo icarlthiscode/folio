@@ -3,6 +3,7 @@ import { render, within } from '@testing-library/svelte';
 
 import { wrapOriginal } from '$lib/tests/component';
 import Content from '$lib/materials/content.svelte';
+import Nav from '$lib/components/nav.svelte';
 import HttpError from '$lib/components/httpError.svelte';
 
 import ErrorPage from './+error.svelte';
@@ -21,6 +22,9 @@ vi.mock('$app/state', async () => ({
 
 vi.mock('$lib/materials/content.svelte', async (original) => {
   return { default : await wrapOriginal(original, { testId : 'content' }) };
+});
+vi.mock('$lib/components/nav.svelte', async (original) => {
+  return { default : await wrapOriginal(original, { testId : 'nav' }) };
 });
 vi.mock('$lib/components/httpError.svelte', async (original) => {
   return { default : await wrapOriginal(original, { testId : 'httpError' }) };
@@ -77,6 +81,24 @@ describe('/+error.svelte', () => {
       expect.anything(),
       expect.objectContaining({ showBackground : false }),
     );
+  });
+
+  it('displays home navigation', () => {
+    const { container } = render(ErrorPage);
+
+    const content = within(container).queryByTestId('content') as HTMLElement;
+    expect(content).toBeInTheDocument();
+    const nav = within(content).queryByTestId('nav') as HTMLElement;
+    expect(nav).toBeInTheDocument();
+    const error = within(content).queryByTestId('httpError') as HTMLElement;
+    expect(error).toBeInTheDocument();
+    expect(nav.compareDocumentPosition(error))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+
+    expect(Nav).toHaveBeenCalledOnce();
+    expect(Nav).toHaveBeenCalledWithProps(expect.objectContaining({
+      targets : ['home'],
+    }));
   });
 
   it('displays error message in title card', () => {

@@ -14,6 +14,7 @@ import Footer from '$lib/components/footer.svelte';
 import ArticlePage from './+page.svelte';
 
 let isBrowser = vi.hoisted(() => true);
+let setConfig : ((value : unknown) => void) = vi.hoisted(() => () => {});
 
 const locale = vi.hoisted(() => ({
   nav : {
@@ -26,6 +27,19 @@ const locale = vi.hoisted(() => ({
 
 vi.mock('$app/environment', () => ({ get browser() { return isBrowser; } }));
 
+vi.mock('$lib/hooks/useConfig', async (original) => {
+  const originalDefault =
+    ((await original()) as { default : () => object; }).default;
+  const writable = (await import('svelte/store')).writable;
+  const config = writable<unknown>();
+  setConfig = (value : unknown) => config.set(value);
+  return {
+    default : () => ({
+      ...originalDefault(),
+      config,
+    }),
+  };
+});
 vi.mock('$lib/hooks/useLocale', async (original) => {
   const originalDefault =
     ((await original()) as { default : () => object; }).default;
@@ -74,6 +88,7 @@ const data = {
 beforeEach(() => {
   vi.clearAllMocks();
   isBrowser = true;
+  setConfig(defaultConfig);
 });
 afterAll(() => { vi.restoreAllMocks(); });
 
@@ -86,7 +101,12 @@ describe('+page.svelte', () => {
     }));
   });
 
-  it('renders article main navigation', () => {
+  it('renders article main navigation with configured targets', () => {
+    const expectedTargets = ['home', 'allArticles'];
+    setConfig({
+      ...defaultConfig,
+      nav : { ...defaultConfig.nav, article : expectedTargets },
+    });
     const { container } = render(ArticlePage, { data });
 
     const content = within(container)
@@ -97,12 +117,7 @@ describe('+page.svelte', () => {
 
     expect(Nav).toHaveBeenCalledOnce();
     expect(Nav).toHaveBeenCalledWithProps(expect.objectContaining({
-      home : true,
-      allArticles : true,
-      contact : true,
-    }));
-    expect(Nav).not.toHaveBeenCalledWithProps(expect.objectContaining({
-      highlights : true,
+      targets : expectedTargets,
     }));
   });
 

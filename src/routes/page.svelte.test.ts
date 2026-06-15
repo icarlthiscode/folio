@@ -3,7 +3,7 @@ import { render, within } from '@testing-library/svelte';
 
 import { tryGet } from '$lib/utils/typing';
 import { wrapOriginal } from '$lib/tests/component';
-import type { Config } from '$lib/utils/config';
+import { defaultConfig } from '$lib/utils/config';
 import { defaultLocale } from '$lib/utils/locale';
 import type { Article } from '$lib/utils/weblog';
 import Content from '$lib/materials/content.svelte';
@@ -27,7 +27,6 @@ const baseHighlight = {
   section : 'exampleSection',
 };
 
-const defaultConfig = vi.hoisted(() => ({} as Config));
 const defaultData = {
   articles : {},
 } as PageData;
@@ -35,7 +34,6 @@ const defaultData = {
 let isBrowser = vi.hoisted(() => true);
 
 let setConfig : ((value : unknown) => void) = vi.hoisted(() => () => {});
-
 let setLocale : ((value : unknown) => void) = vi.hoisted(() => () => {});
 
 vi.mock('$app/environment', () => ({ get browser() { return isBrowser; } }));
@@ -193,7 +191,13 @@ describe('+page.svelte', () => {
     );
   });
 
-  it('renders profile main navigation', () => {
+  it('renders profile main navigation with configured targets', () => {
+    const expectedTargets = ['highlights', 'allArticles'];
+    setConfig({
+      ...defaultConfig,
+      nav : { ...defaultConfig.nav, home : ['home', ...expectedTargets] },
+    });
+
     const { container } = render(HomePage, { data : defaultData });
 
     const content = within(container)
@@ -204,12 +208,7 @@ describe('+page.svelte', () => {
 
     expect(Nav).toHaveBeenCalledOnce();
     expect(Nav).toHaveBeenCalledWithProps(expect.objectContaining({
-      highlights : true,
-      allArticles : true,
-      contact : true,
-    }));
-    expect(Nav).not.toHaveBeenCalledWithProps(expect.objectContaining({
-      home : true,
+      targets : expectedTargets,
     }));
   });
 
@@ -243,7 +242,7 @@ describe('+page.svelte', () => {
     const config = {
       ...defaultConfig,
       highlights : expectedHighlights,
-    } as Config;
+    };
     setConfig(config);
 
     const { container } = render(HomePage, { data : defaultData });
@@ -284,7 +283,7 @@ describe('+page.svelte', () => {
           section : 'exampleSection',
         },
       ],
-    } as Config;
+    };
     setConfig(config);
 
     render(HomePage, { data : {
@@ -356,7 +355,7 @@ describe('+page.svelte', () => {
           section : 'exampleSection',
         },
       ],
-    } as Config;
+    };
     setConfig(config);
 
     render(HomePage, { data : defaultData });
