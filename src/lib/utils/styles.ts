@@ -47,6 +47,7 @@ function compileSection(classes : string[], section : Section) {
       .map(([key, value]) => [`--scale-${kebabCase(key)}`, value])),
     ...Object.fromEntries(Object.entries(section.palette)
       .map(([key, value]) => [`--colour-${kebabCase(key)}`, value])),
+    '--max-page-width' : section.scale.maxWidth,
     '--padding-inset' : section.scale.inset,
     '--layout-spacing' : section.scale.spacing,
     '--border-colour' : section.palette.border ?? 'transparent',

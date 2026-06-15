@@ -77,10 +77,13 @@
     display: flex;
     flex-grow: 1;
     width: 100%;
+    max-width:
+      calc(var(--max-page-width, 128rem) + (4 * var(--layout-spacing, 0)));
     flex-direction: column;
     justify-content: var(--content-justify);
     align-items: var(--content-align);
     gap: var(--layout-spacing);
+    margin: 0 auto;
     padding:
       calc(2 * var(--layout-spacing, 0))
       calc(2 *var(--layout-spacing, 0) * var(--layout-scale, 1));

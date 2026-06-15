@@ -1066,6 +1066,24 @@ describe('getSection scale', () => {
     expect(section.scale).toEqual(expect.objectContaining(expectedScale));
   });
 
+  it('returns default theme max width if max width unset', () => {
+    const theme = {
+      ...testTheme,
+      scales : {
+        ...testTheme.scales,
+        [testTheme.sections.default.scale] : {
+          ...testTheme.scales[testTheme.sections.default.scale],
+          maxWidth : undefined,
+        },
+      },
+    };
+    const expectedSection =
+      { maxWidth : defaultThemes.default.scales.default.maxWidth };
+    const section = getSection(theme);
+    expect(section.scale)
+      .toEqual(expect.objectContaining(expectedSection));
+  });
+
   it('returns default theme inset if inset unset', () => {
     const theme = {
       ...testTheme,

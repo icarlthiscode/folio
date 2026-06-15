@@ -15,6 +15,7 @@ export interface Section {
 export type Palette = Record<string, string>;
 
 export type Scale = {
+  maxWidth : string;
   inset : string;
   spacing : string;
   fontSize : string;
@@ -78,6 +79,7 @@ export const defaultTheme = {
   },
   scales : {
     default : {
+      maxWidth : '128rem',
       inset : '2rem',
       spacing : '4rem',
       fontSize : '1rem',
@@ -215,6 +217,8 @@ function makeScale(scale : unknown) : Scale {
     }
   }
 
+  if (scl.maxWidth === undefined)
+    scl.maxWidth = defaultTheme.scales.default.maxWidth;
   if (scl.inset === undefined) scl.inset = defaultTheme.scales.default.inset;
   if (scl.spacing === undefined)
     scl.spacing = defaultTheme.scales.default.spacing;

@@ -19,6 +19,7 @@ const testSection = vi.hoisted(() => ({
     border : '#222222',
   },
   scale : {
+    maxWidth : 'testMaxWidth',
     inset : 'testInset',
     spacing : 'testSpacing',
     fontSize : 'testFontSize',
@@ -335,6 +336,14 @@ describe('compileStyles', () => {
 
     const block = matchBlock(styles);
     expect(block?.[0]).contains(`--scale-test-size: 123px;`);
+  });
+
+  it('returns compiled page max width', () => {
+    const styles = compileStyles(testThemes);
+
+    const block = matchBlock(styles);
+    expect(block?.[0])
+      .contains(`--max-page-width: ${testSection.scale.maxWidth};`);
   });
 
   it('returns compiled padding inset', () => {
