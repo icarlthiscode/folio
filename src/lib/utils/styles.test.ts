@@ -49,6 +49,7 @@ const testSection = vi.hoisted(() => ({
       colourMap : { first : '#123456', second : '#234567' },
     },
   },
+  grid : true,
   scrim : false,
 }));
 

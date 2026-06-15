@@ -57,6 +57,12 @@ a {
   flex-shrink: 1;
 }
 
+.grid.stretch > * {
+  width: 0%;
+  min-width: var(--grid-item-width, 100%);
+  max-width: 100%;
+}
+
 .stack {
   margin: calc(1.5 * var(--layout-spacing, 0)) 0;
 }

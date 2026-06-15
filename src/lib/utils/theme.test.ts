@@ -18,6 +18,7 @@ const testTheme = {
       background : 'test',
       typography : 'test',
       graphics : 'test',
+      grid : true,
       scrim : false,
     },
   },
@@ -78,6 +79,7 @@ function makeSection({
   background,
   typography,
   graphics,
+  grid = true,
   scrim = false,
 } : {
   palette ?: Record<string, unknown>;
@@ -86,6 +88,7 @@ function makeSection({
   background ?: object;
   typography ?: Record<string, unknown>;
   graphics ?: Record<string, unknown>;
+  grid ?: boolean;
   scrim ?: boolean;
 }) {
   palette = palette ?? {
@@ -147,6 +150,7 @@ function makeSection({
       };
     }, {} as unknown),
     graphics : { ...graphics },
+    grid,
     scrim,
   } as Section;
 }
@@ -895,6 +899,43 @@ describe('getSection', () => {
     expect(section).toEqual(expect.objectContaining({
       graphics : expect.objectContaining(expectedSection.graphics),
     }));
+  });
+
+  it.each([true, false])('returns section grid', (grid) => {
+    const theme = {
+      ...testTheme,
+      sections : {
+        ...testTheme.sections,
+        default : { ...testTheme.sections.default, grid },
+      },
+    };
+    const section = getSection(theme);
+    expect(section).toEqual(expect.objectContaining({ grid }));
+  });
+
+  it('returns default grid', () => {
+    const { grid : _, ...testSection } = { ...testTheme.sections.default };
+    const theme = {
+      ...testTheme,
+      sections : {
+        ...testTheme.sections,
+        default : { ...testSection },
+      },
+    };
+    const section = getSection(theme);
+    expect(section).toEqual(expect.objectContaining({ grid : true }));
+  });
+
+  it('returns default grid if grid invalid', () => {
+    const theme = {
+      ...testTheme,
+      sections : {
+        ...testTheme.sections,
+        default : { ...testTheme.sections.default, grid : 42 },
+      },
+    };
+    const section = getSection(theme);
+    expect(section).toEqual(expect.objectContaining({ grid : true }));
   });
 
   it.each([true, false])('returns section scrim', (scrim) => {
