@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { resolveUrl } from '$lib/utils/http';
   import useConfig from '$lib/hooks/useConfig';
   import useLocale from '$lib/hooks/useLocale';
@@ -16,13 +17,16 @@
   const { graphics } = useGraphics();
   const { index } = useArticles();
 
-  config.set(data.config);
-  locale.set(data.locale);
-  themes.set(data.themes);
-  graphics.set(data.graphics);
-  index.set(data.articleIndex);
+  const init = () => {
+    config.set((() => data.config)());
+    locale.set((() => data.locale)());
+    themes.set((() => data.themes)());
+    graphics.set((() => data.graphics)());
+    index.set((() => data.articleIndex)());
+  };
+  init();
 
-  subscribeLocalTheme();
+  onMount(() => subscribeLocalTheme());
 </script>
 
 <Page>

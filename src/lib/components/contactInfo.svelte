@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from '$app/environment';
   import useConfig from '$lib/hooks/useConfig';
   import useLocale from '$lib/hooks/useLocale';
   import Text from '$lib/materials/text.svelte';
@@ -20,7 +21,7 @@
     </Text>
     <ul>
       {#each $config.contact ?? [] as item (item.text)}
-      <ListItem icon={item.icon}>
+      <ListItem icon={item.icon} showIcon={browser}>
         <Text flex>
           { item.text }
           <Link href={item.href}>{ item.link }</Link>

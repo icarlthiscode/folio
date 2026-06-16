@@ -8,6 +8,8 @@ import Link from '$lib/materials/link.svelte';
 import ListItem from '$lib/materials/listItem.svelte';
 import ContactInfo from './contactInfo.svelte';
 
+let isBrowser = vi.hoisted(() => true);
+
 const defaultConfig = vi.hoisted(() => ({
   contact : [
     { icon : 'icon1', link : 'link1', href : 'href1' },
@@ -19,6 +21,8 @@ let setConfig : ((value : unknown) => void) = vi.hoisted(() => () => {});
 const locale = vi.hoisted(() => ({
   contact : { infoHeader : 'Contact Info Header' },
 }));
+
+vi.mock('$app/environment', () => ({ get browser() { return isBrowser; } }));
 
 vi.mock('$lib/hooks/useConfig', async (original) => {
   const originalDefault =
@@ -62,6 +66,7 @@ vi.mock('$lib/materials/listItem.svelte', async (original) => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  isBrowser = false;
   setConfig(defaultConfig);
 });
 
@@ -120,5 +125,16 @@ describe('ContactInfo', () => {
         icon : info.icon,
       }));
     }
+  });
+
+  it('hides icon server-side', () => {
+    isBrowser = false;
+    render(ContactInfo);
+
+    expect(ListItem).toHaveBeenCalled();
+    vi.mocked(ListItem).mock.calls.forEach((args) => {
+      expect(args[1])
+        .toEqual(expect.objectContaining({ showIcon : false }));
+    });
   });
 });

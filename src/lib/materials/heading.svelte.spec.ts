@@ -7,8 +7,8 @@ import {
   expect,
   vi,
 } from 'vitest';
-import { page } from '@vitest/browser/context';
-import { render } from '@testing-library/svelte';
+import { page } from 'vitest/browser';
+import { cleanup, render } from '@testing-library/svelte';
 
 import { loadStyles } from '$lib/tests/browser';
 import { makeHtml } from '$lib/tests/component';
@@ -18,7 +18,11 @@ import Heading from './heading.svelte';
 vi.mock('$lib/materials/text.svelte', { spy : true });
 
 beforeAll(async () => await loadStyles());
-beforeEach(() => { vi.clearAllMocks(); });
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  cleanup();
+});
 
 afterAll(() => { vi.restoreAllMocks(); });
 
@@ -58,6 +62,19 @@ describe('Heading', () => {
     expect(Text).toHaveBeenCalledOnce();
     expect(Text).toHaveBeenCalledWithProps(expect.objectContaining({
       id : 'test-id',
+    }));
+  });
+
+  it('renders heading with scrim', async () => {
+    render(Heading, {
+      level : 1,
+      scrim : true,
+      children : makeHtml('<span>Heading Text</span>'),
+    });
+
+    expect(Text).toHaveBeenCalledOnce();
+    expect(Text).toHaveBeenCalledWithProps(expect.objectContaining({
+      scrim : true,
     }));
   });
 });

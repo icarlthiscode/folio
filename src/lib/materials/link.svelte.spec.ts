@@ -7,8 +7,8 @@ import {
   expect,
   vi,
 } from 'vitest';
-import { page } from '@vitest/browser/context';
-import { render } from '@testing-library/svelte';
+import { page } from 'vitest/browser';
+import { cleanup, render } from '@testing-library/svelte';
 
 import { loadStyles } from '$lib/tests/browser';
 import { makeHtml } from '$lib/tests/component';
@@ -18,7 +18,11 @@ import Link from './link.svelte';
 vi.mock('$lib/materials/text.svelte', { spy : true });
 
 beforeAll(async () => await loadStyles());
-beforeEach(() => { vi.clearAllMocks(); });
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  cleanup();
+});
 
 afterAll(() => { vi.restoreAllMocks(); });
 
@@ -33,6 +37,9 @@ describe('Link', () => {
     expect(Text).toHaveBeenCalledWithProps(expect.objectContaining({
       as : 'span',
       typography : 'link',
+    }));
+    expect(Text).not.toHaveBeenCalledWithProps(expect.objectContaining({
+      scrim : true,
     }));
 
     const content = page.elementLocator(container).getByText('Link Text');
@@ -50,5 +57,23 @@ describe('Link', () => {
     });
     await expect.element(link).toBeInTheDocument();
     await expect.element(link).toHaveAttribute('href', '/test');
+  });
+
+  it('renders link with scrim', async () => {
+    const { container } = render(Link, {
+      href : '/test',
+      scrim : true,
+      children : makeHtml('<span>Link Text</span>'),
+    });
+
+    expect(Text).toHaveBeenCalledOnce();
+    expect(Text).toHaveBeenCalledWithProps(expect.objectContaining({
+      as : 'span',
+      typography : 'link',
+      scrim : true,
+    }));
+
+    const content = page.elementLocator(container).getByText('Link Text');
+    await expect.element(content).toBeInTheDocument();
   });
 });

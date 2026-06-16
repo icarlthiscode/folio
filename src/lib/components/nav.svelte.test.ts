@@ -20,6 +20,7 @@ const locale = vi.hoisted(() => ({
       highlight1 : 'Highlight One',
       highlight2 : 'Highlight Two',
     },
+    allArticles : 'Test All Articles',
     contact : 'Test Contact',
   } as Record<string, unknown>,
 }));
@@ -69,7 +70,7 @@ describe('Nav', () => {
   });
 
   it('populates nav links with highlights from config', () => {
-    const { container } = render(Nav, { highlights : true });
+    const { container } = render(Nav, { targets : ['highlights'] });
 
     const navLinks = within(container).queryByTestId('navLinks') as HTMLElement;
     expect(navLinks).toBeInTheDocument();
@@ -83,9 +84,20 @@ describe('Nav', () => {
     }));
   });
 
-  it('populates nav links with home locale', () => {
-    const { container } = render(Nav, { home : true });
+  it('populates nav links with all articles locale', () => {
+    const { container } = render(Nav, { targets : ['allArticles'] });
 
+    const navLinks = within(container).queryByTestId('navLinks') as HTMLElement;
+    expect(navLinks).toBeInTheDocument();
+
+    expect(NavLinks).toHaveBeenCalledOnce();
+    expect(NavLinks).toHaveBeenCalledWithProps(expect.objectContaining({
+      links : [{ text : 'Test All Articles', href : '/collections' }],
+    }));
+  });
+
+  it('populates nav links with home locale', () => {
+    const { container } = render(Nav, { targets : ['home'] });
     const navLinks = within(container).queryByTestId('navLinks') as HTMLElement;
     expect(navLinks).toBeInTheDocument();
 
@@ -96,7 +108,7 @@ describe('Nav', () => {
   });
 
   it('populates nav links with contact locale', () => {
-    const { container } = render(Nav, { contact : true });
+    const { container } = render(Nav, { targets : ['contact'] });
 
     const navLinks = within(container).queryByTestId('navLinks') as HTMLElement;
     expect(navLinks).toBeInTheDocument();
@@ -108,11 +120,12 @@ describe('Nav', () => {
   });
 
   it('lists links in correct order', () => {
-    const { container } = render(Nav, {
-      home : true,
-      highlights : true,
-      contact : true,
-    });
+    const { container } = render(Nav, { targets : [
+      'home',
+      'highlights',
+      'allArticles',
+      'contact',
+    ] });
 
     const navLinks = within(container).queryByTestId('navLinks') as HTMLElement;
     expect(navLinks).toBeInTheDocument();
@@ -122,6 +135,7 @@ describe('Nav', () => {
       links : [
         { text : 'Highlight One', href : '/#highlight1' },
         { text : 'Highlight Two', href : '/#highlight2' },
+        { text : 'Test All Articles', href : '/collections' },
         { text : 'Test Home', href : '/' },
         { text : 'Test Contact', href : '/#contact' },
       ],

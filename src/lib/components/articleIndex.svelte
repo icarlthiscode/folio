@@ -2,27 +2,37 @@
   import useArticles from '$lib/hooks/useArticles';
   import Grid from '$lib/materials/grid.svelte';
   import Card from '$lib/materials/card.svelte';
-  import Heading from '$lib/materials/heading.svelte';
   import Abstract from '$lib/components/abstract.svelte';
 
-  const { id, tag } : { id ?: string; tag ?: string; } = $props();
+  const { tag, maxCount = null, headingLevel } : {
+    tag ?: string;
+    maxCount ?: number | null;
+    headingLevel ?: 2 | 3;
+  } = $props();
 
   const { index } = useArticles();
 
-  const title = tag ? ($index.tags[tag]?.name ?? 'Articles') : 'All Articles';
-  const articles = tag
-    ? ($index.tags[tag]?.articles ?? [])
-    : Object.values($index.articles);
+  const articles = $derived(
+    tag
+      ? ($index.tags[tag]?.articles ?? [])
+      : Object.values($index.articles),
+  );
+  const displayed = $derived(
+    maxCount
+      ? articles.toReversed().slice(0, maxCount)
+      : articles.toReversed());
 </script>
 
-<Heading id={id} level={2}>{ title }</Heading>
 <Grid>
-  {#each articles as article (article.slug)}
+  {#each displayed as article (article.slug)}
     <Card>
       <Abstract
         title={article.title}
         abstract={article.abstract}
-        link={`/articles/${article.slug}`}
+        link={article.canonicalRef ?? `/articles/${article.slug}`}
+        datePublished={article.datePublished}
+        tags={article.tags.filter(t => (t.slug !== tag))}
+        {headingLevel}
       />
     </Card>
   {/each}

@@ -22,7 +22,12 @@ async function requestResource(url : string, { fetch } : {
     type : 'http',
   }, { level : 'info' });
   try {
-    const response = await fetch(resolveUrl(url));
+    const response = await fetch(resolveUrl(url), {
+      method : 'GET',
+      headers : env.RESOURCE_AUTH_TOKEN
+        ? { Authorization : `Bearer ${env.RESOURCE_AUTH_TOKEN}` }
+        : undefined,
+    });
     if (!response.ok) {
       log({
         message : `Failed to fetch resource`,

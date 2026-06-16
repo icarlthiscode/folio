@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from '$app/environment';
   import useConfig from '$lib/hooks/useConfig';
   import useLocale from '$lib/hooks/useLocale';
   import Text from '$lib/materials/text.svelte';
@@ -12,9 +13,9 @@
   const { config } = useConfig();
   const { locale } = useLocale();
 
-  const favourites = (rank === 'most'
-    ? $config.likes
-    : $config.dislikes) ?? [];
+  const favourites = $derived.by(
+    () => (rank === 'most' ? $config.likes : $config.dislikes) ?? [],
+  );
 </script>
 
 {#if favourites.length > 0}
@@ -34,7 +35,7 @@
 
     <ul>
       {#each favourites as item (item.text)}
-        <ListItem icon={item.icon}>
+        <ListItem icon={item.icon} showIcon={browser}>
           <Text>{ item.text }</Text>
         </ListItem>
       {/each}

@@ -4,15 +4,31 @@ import markdown from 'markdown-it';
 import markdownFootnote from 'markdown-it-footnote';
 import { logError } from './log';
 
-interface Article {
+export interface Contributor {
+  name : string;
+  href ?: string;
+}
+
+export interface Contribution {
   slug : string;
+  byline : string;
+  members : Contributor[];
+}
+
+export interface Article {
+  slug : string;
+  canonicalRef : string | undefined;
   title : string;
+  datePublished : Date | null;
+  contributions : Contribution[];
+  tags : { slug : string; name : string; }[];
   abstract : string;
 }
 
-interface Tag {
+export interface Tag {
   slug : string;
   name : string;
+  description : string;
   articles : Article[];
 }
 
@@ -25,8 +41,38 @@ export function resolveWeblogIndex(data : unknown) : WeblogIndex {
   const raw = (((typeof data === 'object') && (data !== null))
     ? data
     : {}) as Record<string, unknown>;
+  const contributions : Record<string, { byline : string; }> = {};
+  const contributors : Record<string, Contributor> = {};
   const articles : Record<string, Article> = {};
   const tags : Record<string, Tag> = {};
+
+  const rawContributions =
+    (typeof raw.contributions === 'object') && (raw.contributions !== null)
+      ? raw.contributions
+      : {};
+  for (const [slug, value] of Object.entries(rawContributions)) {
+    const contribution = ((typeof value === 'object') && (value !== null))
+      ? value
+      : {};
+    if (!('byline' in contribution)) continue;
+    if (!`${contribution.byline}`) continue;
+    contributions[slug] = { byline : `${contribution.byline}` };
+  }
+
+  const rawContributors =
+    (typeof raw.contributors === 'object') && (raw.contributors !== null)
+      ? raw.contributors
+      : {};
+  for (const [slug, value] of Object.entries(rawContributors)) {
+    const contributor = ((typeof value === 'object') && (value !== null))
+      ? value
+      : {};
+    if (typeof contributor.name !== 'string' || !contributor.name) continue;
+    contributors[slug] = {
+      name : contributor.name,
+      href : `${contributor.href || ''}`,
+    };
+  }
 
   const rawArticles =
     ((typeof raw.articles === 'object') && (raw.articles !== null))
@@ -36,10 +82,39 @@ export function resolveWeblogIndex(data : unknown) : WeblogIndex {
     const article = ((typeof value === 'object') && (value !== null))
       ? value
       : {};
+    const articleContributions : Contribution[] = [];
+    if (
+      ((typeof article.contributions === 'object')
+        && (article.contributions !== null))
+    ) {
+      for (const c in article.contributions) {
+        const contribution = contributions[c];
+        const contributorKeys = article.contributions[c];
+        if (!contribution) continue;
+        if (!Array.isArray(contributorKeys)) continue;
+        const matchingContributors = contributorKeys
+          .map(k => contributors[k])
+          .filter(c => !!c);
+        if (!matchingContributors.length) continue;
+        articleContributions.push({
+          slug : c,
+          byline : contribution.byline,
+          members : matchingContributors,
+        });
+      }
+    }
+    const proposedDate = new Date(article.datePublished);
+    const dateValid = !Number.isNaN(proposedDate.getTime());
     articles[slug] = {
       slug,
+      canonicalRef : typeof article.canonicalRef === 'string'
+        ? article.canonicalRef
+        : undefined,
       title : `${article.title || ''}`,
+      datePublished : dateValid ? proposedDate : null,
+      contributions : articleContributions,
       abstract : `${article.abstract || ''}`,
+      tags : [], // defer tag assignment until validated
     };
   }
 
@@ -53,12 +128,16 @@ export function resolveWeblogIndex(data : unknown) : WeblogIndex {
       for (const a of tag.articles) {
         const articleSlug = `${a}`;
         const article = articles[articleSlug];
-        if (article) tagArticles.push(article);
+        if (!article) continue;
+        // resolve article tags
+        article.tags.push({ slug, name : tag.name });
+        tagArticles.push(article);
       }
     }
     tags[slug] = {
       slug,
-      name : String(tag.name || ''),
+      name : `${tag.name || ''}`,
+      description : `${tag.description || ''}`,
       articles : tagArticles,
     };
   }
@@ -225,6 +304,22 @@ md.renderer.rules.code_block = codeBlock;
 md.renderer.rules.fence = codeFenced;
 md.renderer.rules.footnote_ref = footnote;
 
-export function renderArticle(markdown : string) {
-  return md.render(markdown);
+export function extractArticle(markdown : string) {
+  let title = '';
+  let body = markdown;
+  if (markdown.match(/^\s*# /)) {
+    title = (markdown.match(/^\s*(#\s+)(.*)(?=\n)/)?.[2] ?? '')
+      .trim();
+    body = markdown.replace(/^(#\s+)(.*)(?=\n)/, '').trim();
+  }
+  return { title, body };
+}
+
+export function renderArticle(markdown : string) : string;
+export function renderArticle(markdown : string[]) : string[];
+export function renderArticle(markdown : string | string[]) {
+  if (typeof markdown === 'string') return md.render(markdown);
+  const joinMarker = '\n<!-- BREAK -->\n';
+  const rendered = md.render(markdown.join(joinMarker));
+  return rendered.split(joinMarker).map(s => s.trim());
 }

@@ -2,7 +2,7 @@ import { beforeEach, afterAll, describe, it, expect, vi } from 'vitest';
 import type { Snippet } from 'svelte';
 import { render, within } from '@testing-library/svelte';
 
-import type { WeblogIndex } from '$lib/utils/weblog';
+import type { Article, WeblogIndex } from '$lib/utils/weblog';
 import { makeComponent, wrapOriginal } from '$lib/tests/component';
 import { defaultConfig } from '$lib/utils/config';
 import { defaultLocale } from '$lib/utils/locale';
@@ -140,7 +140,7 @@ describe('/+layout.svelte', () => {
           slug : 'test-article',
           title : 'Test Article',
           abstract : 'This is a test article.',
-        } },
+        } as Article },
       tags : {},
     } as WeblogIndex;
     render(Layout, {

@@ -112,17 +112,17 @@ function useThemes({ sectionKey, typographyKey, graphicKey } : {
   const section = sectionKey
     ? setContext(ck.section, makeSectionStore(sectionKey))
     : (getContext<Writable<Section>>(ck.section)
-      ?? setContext(ck.section, makeSectionStore('default')));
+      ?? makeSectionStore('default'));
 
   const typography = typographyKey
     ? setContext(ck.typography, makeTypographyStore(typographyKey, section))
     : getContext<Writable<Typography>>(ck.typography)
-      ?? setContext(ck.typography, makeTypographyStore('body', section));
+      ?? makeTypographyStore('body', section);
 
   const graphic = graphicKey
     ? setContext(ck.graphic, makeGraphicStore(graphicKey, section))
     : getContext<Writable<Graphic | undefined>>(ck.graphic)
-      ?? setContext(ck.graphic, makeGraphicStore(undefined, section));
+      ?? makeGraphicStore(undefined, section);
 
   const providerClasses = (sectionKey || typographyKey || graphicKey)
     ? writable(makeClasses(sectionKey, typographyKey, graphicKey))

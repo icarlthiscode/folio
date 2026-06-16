@@ -3,20 +3,40 @@ import { render, within } from '@testing-library/svelte';
 
 import { tryGet } from '$lib/utils/typing';
 import { wrapOriginal } from '$lib/tests/component';
-import type { Config } from '$lib/utils/config';
+import { defaultConfig } from '$lib/utils/config';
 import { defaultLocale } from '$lib/utils/locale';
+import type { Article } from '$lib/utils/weblog';
 import Content from '$lib/materials/content.svelte';
 import Nav from '$lib/components/nav.svelte';
 import Profile from '$lib/components/profile.svelte';
 import Highlight from '$lib/components/highlight.svelte';
 import Contact from '$lib/components/contact.svelte';
 
+import type { PageData } from './$types';
 import HomePage from './+page.svelte';
 
-const defaultConfig = vi.hoisted(() => ({} as Config));
-let setConfig : ((value : unknown) => void) = vi.hoisted(() => () => {});
+const baseHighlight = {
+  id : '1',
+  type : 'article',
+  key : 'test',
+  count : null,
+  title : '',
+  intro : '',
+  outro : '',
+  links : [],
+  section : 'exampleSection',
+};
 
+const defaultData = {
+  articles : {},
+} as PageData;
+
+let isBrowser = vi.hoisted(() => true);
+
+let setConfig : ((value : unknown) => void) = vi.hoisted(() => () => {});
 let setLocale : ((value : unknown) => void) = vi.hoisted(() => () => {});
+
+vi.mock('$app/environment', () => ({ get browser() { return isBrowser; } }));
 
 vi.mock('$lib/hooks/useConfig', async (original) => {
   const originalDefault =
@@ -68,6 +88,7 @@ vi.mock('$lib/components/contact.svelte', async (original) => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  isBrowser = true;
   setConfig(defaultConfig);
   setLocale(defaultLocale);
   document.head.innerHTML = '';
@@ -76,7 +97,7 @@ afterAll(() => { vi.restoreAllMocks(); });
 
 describe('+page.svelte', () => {
   it('renders profile', () => {
-    const { container } = render(HomePage);
+    const { container } = render(HomePage, { data : defaultData });
 
     const profile = within(container).queryByTestId('profile') as HTMLElement;
     expect(profile).toBeInTheDocument();
@@ -85,7 +106,7 @@ describe('+page.svelte', () => {
   });
 
   it('set profile theme section', () => {
-    const { container } = render(HomePage);
+    const { container } = render(HomePage, { data : defaultData });
 
     const content = within(container)
       .queryByTestId('content-profile') as HTMLElement;
@@ -100,7 +121,7 @@ describe('+page.svelte', () => {
   });
 
   it('centers profile content', () => {
-    const { container } = render(HomePage);
+    const { container } = render(HomePage, { data : defaultData });
 
     const content = within(container)
       .queryByTestId('content-profile') as HTMLElement;
@@ -117,8 +138,67 @@ describe('+page.svelte', () => {
     );
   });
 
-  it('renders profile main navigation', () => {
-    const { container } = render(HomePage);
+  it('adjusts profile content for top profile nav', () => {
+    const { container } = render(HomePage, { data : defaultData });
+
+    const content = within(container)
+      .queryByTestId('content-profile') as HTMLElement;
+    expect(content).toBeInTheDocument();
+    const profile = within(content).queryByTestId('profile') as HTMLElement;
+    expect(profile).toBeInTheDocument();
+
+    expect(Content).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ hasTopNav : true }),
+    );
+  });
+
+  it('adjusts profile content for bottom profile nav', () => {
+    setConfig({
+      ...defaultConfig,
+      profileLinks : [{ text : 'Test Link', href : '#test' }],
+    });
+    const { container } = render(HomePage, { data : defaultData });
+
+    const content = within(container)
+      .queryByTestId('content-profile') as HTMLElement;
+    expect(content).toBeInTheDocument();
+    const profile = within(content).queryByTestId('profile') as HTMLElement;
+    expect(profile).toBeInTheDocument();
+
+    expect(Content).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ hasBottomNav : true }),
+    );
+  });
+
+  it('does not adjust profile content for empty bottom profile nav', () => {
+    setConfig({
+      ...defaultConfig,
+      profileLinks : [],
+    });
+    const { container } = render(HomePage, { data : defaultData });
+
+    const content = within(container)
+      .queryByTestId('content-profile') as HTMLElement;
+    expect(content).toBeInTheDocument();
+    const profile = within(content).queryByTestId('profile') as HTMLElement;
+    expect(profile).toBeInTheDocument();
+
+    expect(Content).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ hasBottomNav : false }),
+    );
+  });
+
+  it('renders profile main navigation with configured targets', () => {
+    const expectedTargets = ['highlights', 'allArticles'];
+    setConfig({
+      ...defaultConfig,
+      nav : { ...defaultConfig.nav, home : ['home', ...expectedTargets] },
+    });
+
+    const { container } = render(HomePage, { data : defaultData });
 
     const content = within(container)
       .queryByTestId('content-profile') as HTMLElement;
@@ -128,13 +208,12 @@ describe('+page.svelte', () => {
 
     expect(Nav).toHaveBeenCalledOnce();
     expect(Nav).toHaveBeenCalledWithProps(expect.objectContaining({
-      highlights : true,
-      contact : true,
+      targets : expectedTargets,
     }));
   });
 
   it('does not render highlight without configuration', () => {
-    const { container } = render(HomePage);
+    const { container } = render(HomePage, { data : defaultData });
 
     const highlight = within(container)
       .queryByTestId('highlight') as HTMLElement;
@@ -143,35 +222,88 @@ describe('+page.svelte', () => {
     expect(Highlight).not.toHaveBeenCalled();
   });
 
-  it('renders configured highlights', () => {
+  it('renders configured highlights', async () => {
+    const expectedHighlights = [
+      {
+        ...baseHighlight,
+        id : '1',
+        type : 'article' as const,
+        key : 'example1',
+        section : 'exampleSection1',
+      },
+      {
+        ...baseHighlight,
+        id : '2',
+        type : 'tag' as const,
+        key : 'example2',
+        section : 'exampleSection2',
+      },
+    ];
     const config = {
+      ...defaultConfig,
+      highlights : expectedHighlights,
+    };
+    setConfig(config);
+
+    const { container } = render(HomePage, { data : defaultData });
+
+    for (const highlight of expectedHighlights) {
+      const content = within(container)
+        .queryByTestId(`content-${highlight.section}`) as HTMLElement;
+      expect(content).toBeInTheDocument();
+    }
+
+    const highlights = await within(container)
+      .findAllByTestId('highlight') as HTMLElement[];
+    expect(highlights).toHaveLength(2);
+    for (const highlight of highlights) {
+      expect(highlight).toBeInTheDocument();
+    }
+
+    expect(Highlight).toHaveBeenCalledTimes(highlights.length);
+    for (const highlight of expectedHighlights) {
+      expect(Highlight).toHaveBeenCalledWithProps(expect.objectContaining({
+        highlight,
+      }));
+    }
+  });
+
+  it('renders highlights with pre-loaded articles', () => {
+    const expectedKey = 'article1';
+    const expectedContent = 'Test Article Content';
+    const expectedArticle = { title : 'Test Article' } as Article;
+    const config = {
+      ...defaultConfig,
       highlights : [
         {
-          type : 'tag',
-          key : 'example',
+          ...baseHighlight,
+          id : '1',
+          type : 'article',
+          key : expectedKey,
           section : 'exampleSection',
         },
       ],
-    } as Config;
+    };
     setConfig(config);
 
-    const { container } = render(HomePage);
-
-    const content = within(container)
-      .queryByTestId('content-exampleSection') as HTMLElement;
-    expect(content).toBeInTheDocument();
-    const highlight = within(content)
-      .queryByTestId('highlight') as HTMLElement;
-    expect(highlight).toBeInTheDocument();
+    render(HomePage, { data : {
+      ...defaultData,
+      articles : { [expectedKey] : expectedContent },
+      articleIndex : {
+        articles : { [expectedKey] : expectedArticle },
+        tags : {},
+      },
+    } });
 
     expect(Highlight).toHaveBeenCalledOnce();
     expect(Highlight).toHaveBeenCalledWithProps(expect.objectContaining({
-      highlight : config.highlights?.[0],
+      article : expectedContent,
+      metadata : expectedArticle,
     }));
   });
 
   it('renders contact', () => {
-    const { container } = render(HomePage);
+    const { container } = render(HomePage, { data : defaultData });
 
     const contact = within(container).queryByTestId('contact') as HTMLElement;
     expect(contact).toBeInTheDocument();
@@ -183,7 +315,7 @@ describe('+page.svelte', () => {
   });
 
   it('set contact theme section', () => {
-    const { container } = render(HomePage);
+    const { container } = render(HomePage, { data : defaultData });
 
     const content = within(container)
       .queryByTestId('content-contact') as HTMLElement;
@@ -202,11 +334,36 @@ describe('+page.svelte', () => {
       ...defaultLocale,
       meta : { ...defaultLocale.meta, title : 'Test Title' },
     });
-    render(HomePage);
+    render(HomePage, { data : defaultData });
 
     const title = document.head.querySelector('title');
     expect(title).not.toBeNull();
     expect(title?.textContent).toBe('Test Title');
+  });
+
+  it('hides content background server-side', () => {
+    isBrowser = false;
+    const config = {
+      ...defaultConfig,
+      highlights : [
+        {
+          ...baseHighlight,
+          id : '1',
+          type : 'tag',
+          key : 'example',
+          title : 'Example',
+          section : 'exampleSection',
+        },
+      ],
+    };
+    setConfig(config);
+
+    render(HomePage, { data : defaultData });
+
+    vi.mocked(Content).mock.calls.forEach((args) => {
+      expect(args[1])
+        .toEqual(expect.objectContaining({ showBackground : false }));
+    });
   });
 
   it('does not add title to head if not set', async () => {
@@ -214,7 +371,7 @@ describe('+page.svelte', () => {
       ...defaultLocale,
       meta : { ...defaultLocale.meta, title : '' },
     });
-    render(HomePage);
+    render(HomePage, { data : defaultData });
 
     const title = document.head.querySelector('title');
     expect(title).toBeNull();
@@ -225,7 +382,7 @@ describe('+page.svelte', () => {
       ...defaultLocale,
       meta : { ...defaultLocale.meta, description : 'Test Description' },
     });
-    render(HomePage);
+    render(HomePage, { data : defaultData });
 
     const meta = document.head
       .querySelector('meta[name="description"]') as HTMLMetaElement;
@@ -238,7 +395,7 @@ describe('+page.svelte', () => {
       ...defaultLocale,
       meta : { ...defaultLocale.meta, description : '' },
     });
-    render(HomePage);
+    render(HomePage, { data : defaultData });
 
     const meta = document.head
       .querySelector('meta[name="description"]') as HTMLMetaElement;

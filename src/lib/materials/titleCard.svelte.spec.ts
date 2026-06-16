@@ -7,8 +7,8 @@ import {
   expect,
   vi,
 } from 'vitest';
-import { page } from '@vitest/browser/context';
-import { render } from '@testing-library/svelte';
+import { page } from 'vitest/browser';
+import { cleanup, render } from '@testing-library/svelte';
 
 import { loadStyles } from '$lib/tests/browser';
 import { wrapOriginal } from '$lib/tests/component';
@@ -16,6 +16,19 @@ import Graphic from './graphic.svelte';
 import Title from './title.svelte';
 import Subtitle from './subtitle.svelte';
 import TitleCard from './titleCard.svelte';
+
+vi.mock('$lib/hooks/useThemes', async (original) => {
+  const originalDefault =
+    ((await original()) as { default : () => object; }).default;
+  const writable = (await import('svelte/store')).writable;
+  const graphic = writable<unknown>({ src : 'test-graphic.png' });
+  return {
+    default : () => ({
+      ...originalDefault(),
+      graphic,
+    }),
+  };
+});
 
 vi.mock('$lib/materials/graphic.svelte', async original => ({
   default : await wrapOriginal(original, { testId : 'graphic' }),
@@ -28,7 +41,11 @@ vi.mock('$lib/materials/subtitle.svelte', async original => ({
 }));
 
 beforeAll(async () => await loadStyles());
-beforeEach(() => { vi.clearAllMocks(); });
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  cleanup();
+});
 
 afterAll(() => { vi.restoreAllMocks(); });
 
@@ -105,5 +122,23 @@ describe('TitleCard', () => {
     const cardStyle = getComputedStyle(card);
 
     expect(cardStyle.paddingRight).toBe('64px');
+  });
+
+  it('renders with margin in narrow views', async () => {
+    await page.viewport(1023, 1024);
+
+    const { container } = render(TitleCard, {
+      title : 'Title Text',
+      subtitle : 'Subtitle Text',
+    });
+
+    container.style.setProperty('--layout-spacing', '64px');
+
+    const card = container.children[0] as HTMLElement;
+    await expect.element(card).toBeInTheDocument();
+
+    const cardStyle = getComputedStyle(card);
+
+    expect(cardStyle.marginTop).toBe('64px');
   });
 });

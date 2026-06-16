@@ -7,15 +7,19 @@ import {
   expect,
   vi,
 } from 'vitest';
-import { page } from '@vitest/browser/context';
-import { render } from '@testing-library/svelte';
+import { page } from 'vitest/browser';
+import { cleanup, render } from '@testing-library/svelte';
 
 import { loadStyles } from '$lib/tests/browser';
 import { makeHtml } from '$lib/tests/component';
 import Text from './text.svelte';
 
 beforeAll(async () => await loadStyles());
-beforeEach(() => { vi.clearAllMocks(); });
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  cleanup();
+});
 
 afterAll(() => { vi.restoreAllMocks(); });
 
@@ -122,5 +126,59 @@ describe('Text', () => {
 
     expect(contentBounds.left).toBe(textBounds.left + expectedInset);
     expect(contentBounds.right).toBe(textBounds.right - expectedInset);
+  });
+
+  it('renders content scrim', async () => {
+    const expectedScrim = 8;
+    const { container } = render(Text, {
+      scrim : true,
+      children : makeHtml('<span>Test Text</span>'),
+    });
+
+    container.style.setProperty('padding', '32px');
+    container.style.setProperty('background-color', '#000');
+    container.style.setProperty('--font-size', `${expectedScrim * 2}px`);
+    container.style.setProperty(
+      '--scrim-colour',
+      'color-mix(in srgb, rgba(255, 255, 255, 0.9) 66%, transparent 33%)',
+    );
+
+    const text = page
+      .elementLocator(container.firstElementChild as HTMLElement);
+    const textStyle = getComputedStyle(text.element());
+    const backgroundAlpha = parseFloat(textStyle.backgroundColor
+      .match(/\/\s*([0-9.]+)/)?.[1] ?? '');
+    const boxShadowBlur = textStyle.boxShadow
+      .match(/([0-9]+[a-z]+) [0-9]+[a-z]+$/)?.[1] ?? '';
+    const boxShadowSpread = textStyle.boxShadow
+      .match(/([a-z0-9]+)$/)?.[1] ?? '';
+    const boxShadowAlpha = parseFloat(textStyle.boxShadow
+      .match(/\/\s*([0-9.]+)/)?.[1] ?? '');
+    expect(backgroundAlpha).toBeCloseTo(0.6, 2);
+    expect(boxShadowAlpha).toBeCloseTo(0.6, 2);
+    expect(boxShadowBlur).toBe('8px');
+    expect(boxShadowSpread).toBe('8px');
+  });
+
+  it('renders content without scrim by default', async () => {
+    const { container } = render(Text, {
+      children : makeHtml('<span>Test Text</span>'),
+    });
+
+    container.style.setProperty('padding', '32px');
+    container.style.setProperty('background-color', '#000');
+    container.style.setProperty('--font-size', `16px`);
+    container.style.setProperty(
+      '--scrim-colour',
+      'color-mix(in srgb, rgba(255, 255, 255, 0.9) 66%, transparent 33%)',
+    );
+
+    const article = page
+      .elementLocator(container.firstElementChild as HTMLElement);
+    const articleStyle = getComputedStyle(article.element());
+    const backgroundColor = articleStyle.backgroundColor;
+    const boxShadow = articleStyle.boxShadow;
+    expect(backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    expect(boxShadow).toBe('none');
   });
 });

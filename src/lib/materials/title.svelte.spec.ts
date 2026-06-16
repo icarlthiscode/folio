@@ -7,8 +7,8 @@ import {
   expect,
   vi,
 } from 'vitest';
-import { page } from '@vitest/browser/context';
-import { render } from '@testing-library/svelte';
+import { page } from 'vitest/browser';
+import { cleanup, render } from '@testing-library/svelte';
 
 import { loadStyles } from '$lib/tests/browser';
 import { makeHtml } from '$lib/tests/component';
@@ -18,7 +18,11 @@ import Title from './title.svelte';
 vi.mock('$lib/materials/text.svelte', { spy : true });
 
 beforeAll(async () => await loadStyles());
-beforeEach(() => { vi.clearAllMocks(); });
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  cleanup();
+});
 
 afterAll(() => { vi.restoreAllMocks(); });
 

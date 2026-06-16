@@ -1,7 +1,7 @@
 import pino from 'pino';
-import { NODE_ENV } from '$env/static/private';
+import { dev } from '$app/environment';
 
-const logger = (NODE_ENV === 'development')
+const logger = dev
   ? pino({ transport : { target : 'pino-pretty' } })
   : pino();
 

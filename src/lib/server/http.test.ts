@@ -2,6 +2,7 @@ import { beforeEach, afterAll, describe, expect, it, vi } from 'vitest';
 
 import { log } from './logs';
 
+let authToken : string | undefined;
 let ttl = vi.hoisted(() => 42000);
 let baseUrl : string | undefined = vi.hoisted(() => '/');
 
@@ -11,6 +12,7 @@ const getCacheMock =
 vi.mock('$env/dynamic/private', () => ({
   get env() {
     return {
+      RESOURCE_AUTH_TOKEN : authToken,
       RESOURCE_CACHE_TTL : `${ttl}`,
       BASE_URL : baseUrl,
     };
@@ -59,7 +61,10 @@ describe('fetchResource', () => {
     baseUrl = base;
 
     await fetchResource(res, { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith(expected);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expected,
+      expect.objectContaining({ method : 'GET' }),
+    );
   });
 
   it('fetches from relative URL', async () => {
@@ -67,7 +72,10 @@ describe('fetchResource', () => {
     baseUrl = 'http://example.com/';
 
     await fetchResource('/resource', { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith(new URL('/resource', baseUrl));
+    expect(fetchMock).toHaveBeenCalledWith(
+      new URL('/resource', baseUrl),
+      expect.objectContaining({ method : 'GET' }),
+    );
   });
 
   it('fetches from absolute URL', async () => {
@@ -75,8 +83,26 @@ describe('fetchResource', () => {
     baseUrl = 'http://example.com/';
 
     await fetchResource('http://example.org/resource', { fetch : fetchMock });
-    expect(fetchMock)
-      .toHaveBeenCalledWith(new URL('http://example.org/resource'));
+    expect(fetchMock).toHaveBeenCalledWith(
+      new URL('http://example.org/resource'),
+      expect.objectContaining({ method : 'GET' }),
+    );
+  });
+
+  it('fetches with authorization header', async () => {
+    const { fetchResource } = await import('./http');
+    authToken = 'abc123';
+
+    await fetchResource('/resource', { fetch : fetchMock });
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        method : 'GET',
+        headers : expect.objectContaining({
+          Authorization : 'Bearer abc123',
+        }),
+      }),
+    );
   });
 
   it('logs outgoing request', async () => {
@@ -106,7 +132,10 @@ describe('fetchResource', () => {
     fetchMock.mockRejectedValue(new Error('Network error'));
 
     const result = await fetchResource('/resource', { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith('/resource');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/resource',
+      expect.objectContaining({ method : 'GET' }),
+    );
     expect(result).toBeNull();
   });
 
@@ -128,7 +157,10 @@ describe('fetchResource', () => {
     fetchMock.mockRejectedValue(new Error('Network error'));
 
     const result = await fetchResource('/resource', { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith('/resource');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/resource',
+      expect.objectContaining({ method : 'GET' }),
+    );
     expect(result).toBeNull();
   });
 
@@ -137,7 +169,10 @@ describe('fetchResource', () => {
     fetchMock.mockResolvedValue({ ok : false, status : 404 });
 
     const result = await fetchResource('/resource', { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith('/resource');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/resource',
+      expect.objectContaining({ method : 'GET' }),
+    );
     expect(result).toBeNull();
     expect(log).toHaveBeenCalledWith({
       message : 'Failed to fetch resource',
@@ -154,7 +189,10 @@ describe('fetchResource', () => {
     });
 
     const result = await fetchResource('/resource', { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith('/resource');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/resource',
+      expect.objectContaining({ method : 'GET' }),
+    );
     expect(result).toBeNull();
   });
 
@@ -168,7 +206,10 @@ describe('fetchResource', () => {
     });
 
     const result = await fetchResource('/resource', { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith('/resource');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/resource',
+      expect.objectContaining({ method : 'GET' }),
+    );
     expect(result).toBeNull();
     expect(log).toHaveBeenCalledWith({
       message : 'Error reading response',
@@ -209,7 +250,10 @@ describe('fetchJsonResource', () => {
     baseUrl = base;
 
     await fetchJsonResource(resource, { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith(expected);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expected,
+      expect.objectContaining({ method : 'GET' }),
+    );
   });
 
   it('fetches from relative URL', async () => {
@@ -217,7 +261,10 @@ describe('fetchJsonResource', () => {
     baseUrl = 'http://example.com/';
 
     await fetchJsonResource('/resource', { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith(new URL('/resource', baseUrl));
+    expect(fetchMock).toHaveBeenCalledWith(
+      new URL('/resource', baseUrl),
+      expect.objectContaining({ method : 'GET' }),
+    );
   });
 
   it('fetches from absolute URL', async () => {
@@ -228,8 +275,26 @@ describe('fetchJsonResource', () => {
       'http://example.org/resource',
       { fetch : fetchMock },
     );
-    expect(fetchMock)
-      .toHaveBeenCalledWith(new URL('http://example.org/resource'));
+    expect(fetchMock).toHaveBeenCalledWith(
+      new URL('http://example.org/resource'),
+      expect.objectContaining({ method : 'GET' }),
+    );
+  });
+
+  it('fetches with authorization header', async () => {
+    const { fetchJsonResource } = await import('./http');
+    authToken = 'abc123';
+
+    await fetchJsonResource('/resource', { fetch : fetchMock });
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        method : 'GET',
+        headers : expect.objectContaining({
+          Authorization : 'Bearer abc123',
+        }),
+      }),
+    );
   });
 
   it('logs outgoing request', async () => {
@@ -259,7 +324,10 @@ describe('fetchJsonResource', () => {
     fetchMock.mockRejectedValue(new Error('Network error'))
     ;
     const result = await fetchJsonResource('/resource', { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith('/resource');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/resource',
+      expect.objectContaining({ method : 'GET' }),
+    );
     expect(result).toBeNull();
   });
 
@@ -281,7 +349,10 @@ describe('fetchJsonResource', () => {
     fetchMock.mockResolvedValue({ ok : false, status : 404 });
 
     const result = await fetchJsonResource('/resource', { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith('/resource');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/resource',
+      expect.objectContaining({ method : 'GET' }),
+    );
     expect(result).toBeNull();
   });
 
@@ -290,7 +361,10 @@ describe('fetchJsonResource', () => {
     fetchMock.mockResolvedValue({ ok : false, status : 404 });
 
     const result = await fetchJsonResource('/resource', { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith('/resource');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/resource',
+      expect.objectContaining({ method : 'GET' }),
+    );
     expect(result).toBeNull();
     expect(log).toHaveBeenCalledWith({
       message : 'Failed to fetch resource',
@@ -307,7 +381,10 @@ describe('fetchJsonResource', () => {
     });
 
     const result = await fetchJsonResource('/resource', { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith('/resource');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/resource',
+      expect.objectContaining({ method : 'GET' }),
+    );
     expect(result).toBeNull();
   });
 
@@ -321,7 +398,10 @@ describe('fetchJsonResource', () => {
     });
 
     const result = await fetchJsonResource('/resource', { fetch : fetchMock });
-    expect(fetchMock).toHaveBeenCalledWith('/resource');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/resource',
+      expect.objectContaining({ method : 'GET' }),
+    );
     expect(result).toBeNull();
     expect(log).toHaveBeenCalledWith({
       message : 'Error reading JSON response',

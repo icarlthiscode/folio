@@ -2,7 +2,7 @@ import { beforeEach, afterAll, describe, it, expect } from 'vitest';
 import { render } from '@testing-library/svelte';
 import { get } from 'svelte/store';
 
-import type { WeblogIndex } from '$lib/utils/weblog';
+import type { Article, WeblogIndex } from '$lib/utils/weblog';
 import { resetIndex } from '$lib/stores/articles';
 
 import useArticles from './useArticles';
@@ -19,7 +19,7 @@ describe('useArticles', () => {
         slug : 'test-article',
         title : 'Test Article',
         abstract : 'Test abstract.',
-      },
+      } as Article,
     }, tags : {} };
 
     render(Test, { props : { setIndex : () => expected } });
@@ -35,7 +35,7 @@ describe('useArticles', () => {
         slug : 'test-article',
         title : 'Test Article',
         abstract : 'Test abstract.',
-      },
+      } as Article,
     }, tags : {} };
     index.set(expected);
 

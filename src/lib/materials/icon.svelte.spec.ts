@@ -7,7 +7,7 @@ import {
   expect,
   vi,
 } from 'vitest';
-import { render } from '@testing-library/svelte';
+import { cleanup, render } from '@testing-library/svelte';
 
 import { loadStyles } from '$lib/tests/browser';
 import { wrapOriginal } from '$lib/tests/component';
@@ -19,7 +19,11 @@ vi.mock('$lib/materials/graphic.svelte', async original => ({
 }));
 
 beforeAll(async () => await loadStyles());
-beforeEach(() => { vi.clearAllMocks(); });
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  cleanup();
+});
 
 afterAll(() => { vi.restoreAllMocks(); });
 
@@ -40,5 +44,22 @@ describe('Icon', () => {
     expect(Graphic).toHaveBeenCalledWithProps(expect.objectContaining({
       graphic : 'icon-graphic',
     }));
+  });
+
+  it('hides graphic when show is false', () => {
+    const { container } = render(Icon, {
+      graphic : 'icon-graphic',
+      show : false,
+    });
+
+    const icon = container.children[0] as HTMLElement;
+    expect(icon).toBeInTheDocument();
+
+    expect(Graphic).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        show : false,
+      }),
+    );
   });
 });

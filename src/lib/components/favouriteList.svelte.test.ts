@@ -7,6 +7,8 @@ import Text from '$lib/materials/text.svelte';
 import ListItem from '$lib/materials/listItem.svelte';
 import FavouriteList from './favouriteList.svelte';
 
+let isBrowser = vi.hoisted(() => true);
+
 const defaultConfig = vi.hoisted(() => ({
   likes : [
     { icon : 'icon1', text : 'like1' },
@@ -26,6 +28,8 @@ const locale = vi.hoisted(() => ({
     least : 'Least Favourite',
   },
 }));
+
+vi.mock('$app/environment', () => ({ get browser() { return isBrowser; } }));
 
 vi.mock('$lib/hooks/useConfig', async (original) => {
   const originalDefault =
@@ -66,6 +70,7 @@ vi.mock('$lib/materials/listItem.svelte', async (original) => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  isBrowser = true;
   setConfig({ ...defaultConfig });
 });
 
@@ -137,5 +142,16 @@ describe('FavouriteList', () => {
         icon : fav.icon,
       }));
     }
+  });
+
+  it('hides icon server-side', () => {
+    isBrowser = false;
+    render(FavouriteList);
+
+    expect(ListItem).toHaveBeenCalled();
+    vi.mocked(ListItem).mock.calls.forEach((args) => {
+      expect(args[1])
+        .toEqual(expect.objectContaining({ showIcon : false }));
+    });
   });
 });

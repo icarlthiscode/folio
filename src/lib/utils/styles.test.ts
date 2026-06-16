@@ -19,6 +19,7 @@ const testSection = vi.hoisted(() => ({
     border : '#222222',
   },
   scale : {
+    maxWidth : 'testMaxWidth',
     inset : 'testInset',
     spacing : 'testSpacing',
     fontSize : 'testFontSize',
@@ -48,6 +49,8 @@ const testSection = vi.hoisted(() => ({
       colourMap : { first : '#123456', second : '#234567' },
     },
   },
+  grid : true,
+  scrim : false,
 }));
 
 function matchBlock(style : string, {
@@ -336,6 +339,14 @@ describe('compileStyles', () => {
     expect(block?.[0]).contains(`--scale-test-size: 123px;`);
   });
 
+  it('returns compiled page max width', () => {
+    const styles = compileStyles(testThemes);
+
+    const block = matchBlock(styles);
+    expect(block?.[0])
+      .contains(`--max-page-width: ${testSection.scale.maxWidth};`);
+  });
+
   it('returns compiled padding inset', () => {
     const styles = compileStyles(testThemes);
 
@@ -532,6 +543,43 @@ describe('compileStyles', () => {
     expect(block?.[0]).contains(`--bg-opacity: 0.5;`);
   });
 
+  it('returns compiled scrim colour', () => {
+    const section = {
+      ...testSection,
+      scrim : true,
+      background : { ...testSection.background, fill : '#042' },
+    };
+    getAllSectionsMock.mockReturnValue({ test : section });
+
+    const styles = compileStyles(testThemes);
+
+    const block = matchBlock(styles, { section : 'test' });
+    expect(block?.[0]).contains(
+      'color-mix(in srgb, #042 66%, transparent 33%)',
+    );
+  });
+
+  it('returns transparent scrim', () => {
+    const section = { ...testSection, scrim : false };
+    getAllSectionsMock.mockReturnValue({ test : section });
+
+    const styles = compileStyles(testThemes);
+
+    const block = matchBlock(styles, { section : 'test' });
+    expect(block?.[0]).contains(`--scrim-colour: transparent;`);
+  });
+
+  it('returns transparent scrim if no background colour', () => {
+    const { fill : _, ...background } = testSection.background;
+    const section = { ...testSection, scrim : true, background };
+    getAllSectionsMock.mockReturnValue({ test : section });
+
+    const styles = compileStyles(testThemes);
+
+    const block = matchBlock(styles, { section : 'test' });
+    expect(block?.[0]).contains(`--scrim-colour: transparent;`);
+  });
+
   it('returns default background image opacity', () => {
     const { opacity : _, ...backgroundImage } = testSection.background.img;
     const section = {
@@ -591,6 +639,85 @@ describe('compileStyles', () => {
     const block = matchBlock(styles, { section : 'test', background : 'key' });
     expect(block).toHaveLength(1);
     expect(block?.[0]).contains(`color: #123456;`);
+  });
+
+  it.each([
+    'cover' as const,
+    'tile' as const,
+  ])('returns without initial background image position', (mode) => {
+    const section = {
+      ...testSection,
+      background : {
+        ...testSection.background,
+        img : { ...testSection.background.img, mode },
+      },
+    };
+    getAllSectionsMock.mockReturnValue({ test : section });
+
+    const styles = compileStyles(testThemes);
+
+    const block = matchBlock(styles, { section : 'test' });
+    expect(block?.[0]).contains(`--bg-position: initial;`);
+  });
+
+  it('returns top background image position', () => {
+    const section = {
+      ...testSection,
+      background : {
+        ...testSection.background,
+        img : {
+          ...testSection.background.img,
+          mode : 'fixed' as const,
+          anchor : 'centre' as const,
+        },
+      },
+    };
+    getAllSectionsMock.mockReturnValue({ test : section });
+
+    const styles = compileStyles(testThemes);
+
+    const block = matchBlock(styles, { section : 'test' });
+    expect(block?.[0]).contains(`--bg-position: top;`);
+  });
+
+  it('returns top left background image position', () => {
+    const section = {
+      ...testSection,
+      background : {
+        ...testSection.background,
+        img : {
+          ...testSection.background.img,
+          mode : 'fixed' as const,
+          anchor : 'left' as const,
+        },
+      },
+    };
+    getAllSectionsMock.mockReturnValue({ test : section });
+
+    const styles = compileStyles(testThemes);
+
+    const block = matchBlock(styles, { section : 'test' });
+    expect(block?.[0]).contains(`--bg-position: top left;`);
+  });
+
+  it('returns top right background image position', () => {
+    const section = {
+      ...testSection,
+      background : {
+        ...testSection.background,
+        img : {
+          ...testSection.background.img,
+          mode : 'fixed' as const,
+          anchor : 'right' as const,
+        },
+      },
+    };
+    getAllSectionsMock.mockReturnValue({ test : section });
+
+    const styles = compileStyles(testThemes);
+
+    const block = matchBlock(styles, { section : 'test' });
+    expect(block?.[0]).contains(`--bg-position: top right;`);
   });
 
   it('returns compiled typography styles', () => {

@@ -14,6 +14,54 @@ describe('config', () => {
   });
 });
 
+describe('config nav', () => {
+  it.each([
+    'home',
+    'collection',
+    'article',
+  ] as const)('returns valid nav targets', (navTarget) => {
+    const config = buildConfig({
+      ...testConfig,
+      nav : { [navTarget] : ['allArticles'] },
+    });
+    expect(config).toEqual(expect.objectContaining({
+      nav : expect.objectContaining({ [navTarget] : ['allArticles'] }),
+    }));
+  });
+
+  it.each([
+    'home',
+    'collection',
+    'article',
+  ] as const)('defaults missing nav targets', (navTarget) => {
+    const config = buildConfig({
+      ...testConfig,
+      nav : {},
+    });
+    expect(config).toEqual(expect.objectContaining({
+      nav : expect.objectContaining({
+        [navTarget] : defaultConfig.nav[navTarget],
+      }),
+    }));
+  });
+
+  it.each([
+    'home',
+    'collection',
+    'article',
+  ] as const)('defaults invalid nav targets', (navTarget) => {
+    const config = buildConfig({
+      ...testConfig,
+      nav : { [navTarget] : 42 },
+    });
+    expect(config).toEqual(expect.objectContaining({
+      nav : expect.objectContaining({
+        [navTarget] : defaultConfig.nav[navTarget],
+      }),
+    }));
+  });
+});
+
 describe('config likes', () => {
   it('returns config with valid likes', () => {
     const config = buildConfig({
@@ -105,8 +153,12 @@ describe('config highlights', () => {
     });
     expect(config).toEqual(expect.objectContaining({
       highlights : [
-        { id : 'tag1', type : 'tag', key : 'tag1', section : 'Section 1' },
-        { id : 'tag2', type : 'tag', key : 'tag2' },
+        expect.objectContaining(
+          { id : 'tag1', type : 'tag', key : 'tag1', section : 'Section 1' },
+        ),
+        expect.objectContaining(
+          { id : 'tag2', type : 'tag', key : 'tag2' },
+        ),
       ],
     }));
   });
@@ -115,19 +167,36 @@ describe('config highlights', () => {
     const config = buildConfig({
       ...testConfig,
       highlights : [
-        { id : 'tag1', type : 'tag', key : 'tag1', section : 'Section 1' },
+        { id : 'art1', type : 'article', key : 'art1', section : 'Section 1' },
+        {
+          id : 'tag1',
+          type : 'tag',
+          key : 'tag1',
+          count : 42,
+          section : 'Section 1',
+        },
+        { id : 'tag2', key : 'tag2', section : 'Section 1' },
         { type : 'tag', key : 'tag1', section : 'Section 1' },
         { id : 'cat1', type : 'category', key : 'cat1' },
-        { id : 'tag2', type : 'tag' },
-        { id : 'tag3', type : 'tag', key : 123 },
-        { id : 'tag4', type : 'tag', key : 'tag2', section : 456 },
+        { id : 'tag3', type : 'tag' },
+        { id : 'tag4', type : 'tag', key : 123 },
       ],
     });
-    expect(config).toEqual(expect.objectContaining({
-      highlights : [
-        { id : 'tag1', type : 'tag', key : 'tag1', section : 'Section 1' },
-      ],
-    }));
+    expect(config).toEqual(expect.objectContaining({ highlights : [
+      expect.objectContaining({
+        id : 'art1',
+        type : 'article',
+        key : 'art1',
+        section : 'Section 1',
+      }),
+      expect.objectContaining({
+        id : 'tag1',
+        type : 'tag',
+        key : 'tag1',
+        count : 42,
+        section : 'Section 1',
+      }),
+    ] }));
   });
 
   it('filters out duplicate highlight IDs', () => {
@@ -142,8 +211,146 @@ describe('config highlights', () => {
     });
     expect(config).toEqual(expect.objectContaining({
       highlights : [
-        { id : 'tag1', type : 'tag', key : 'tag1' },
-        { id : 'tag2', type : 'tag', key : 'tag2' },
+        expect.objectContaining({ id : 'tag1', key : 'tag1' }),
+        expect.objectContaining({ id : 'tag2', key : 'tag2' }),
+      ],
+    }));
+  });
+
+  it('drops invalid highlight count', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [{ id : 'tag1', type : 'tag', key : 'tag1', count : '42' }],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'tag1', key : 'tag1', count : null }),
+      ],
+    }));
+  });
+
+  it('drops invalid highlight count', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [{ id : 'tag1', type : 'tag', key : 'tag1', count : '42' }],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'tag1', key : 'tag1', count : null }),
+      ],
+    }));
+  });
+
+  it('replaces invalid highlight title', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [
+        { id : 'art1', type : 'article', key : 'art1', title : 'Test Title' },
+        { id : 'art2', type : 'article', key : 'art2', title : 42 },
+      ],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'art1', title : 'Test Title' }),
+        expect.objectContaining({ id : 'art2', title : '' }),
+      ],
+    }));
+  });
+
+  it('replaces invalid highlight intro', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [
+        {
+          id : 'art1',
+          type : 'article',
+          key : 'art1',
+          intro : 'Test introduction.',
+        },
+        { id : 'art2', type : 'article', key : 'art2', intro : 42 },
+      ],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'art1', intro : 'Test introduction.' }),
+        expect.objectContaining({ id : 'art2', intro : '' }),
+      ],
+    }));
+  });
+
+  it('replaces invalid highlight outro', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [
+        {
+          id : 'art1',
+          type : 'article',
+          key : 'art1',
+          outro : 'Test conclusion.',
+        },
+        { id : 'art2', type : 'article', key : 'art2', intro : 42 },
+      ],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'art1', outro : 'Test conclusion.' }),
+        expect.objectContaining({ id : 'art2', outro : '' }),
+      ],
+    }));
+  });
+
+  it('replaces invalid highlight section', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [
+        { id : 'art1', type : 'article', key : 'art1', section : 'Section 1' },
+        { id : 'art2', type : 'article', key : 'art2', section : 42 },
+      ],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'art1', section : 'Section 1' }),
+        expect.objectContaining({ id : 'art2', section : '' }),
+      ],
+    }));
+  });
+
+  it('replaces invalid links', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [
+        { id : 'art1', type : 'article', key : 'art1', links : [
+          { text : 'Link 1', href : '/link1' },
+        ] },
+        { id : 'art2', type : 'article', key : 'art2', links : {} },
+      ],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'art1', links : [
+          expect.objectContaining({ text : 'Link 1', href : '/link1' }),
+        ] }),
+        expect.objectContaining({ id : 'art2', links : [] }),
+      ],
+    }));
+  });
+
+  it('drops invalid link', () => {
+    const config = buildConfig({
+      ...testConfig,
+      highlights : [
+        { id : 'art1', type : 'article', key : 'art1', links : [
+          { text : 'Link 1', href : '/link1' },
+          { text : 'Link 2', href : 42 },
+          { text : 42, href : '/link3' },
+        ] },
+      ],
+    });
+    expect(config).toEqual(expect.objectContaining({
+      highlights : [
+        expect.objectContaining({ id : 'art1', links : [
+          expect.objectContaining({ text : 'Link 1', href : '/link1' }),
+        ] }),
       ],
     }));
   });
@@ -282,7 +489,7 @@ describe('config weblog', () => {
       weblog : { url : 'https://example.com/weblog' },
     });
     expect(config).toEqual(expect.objectContaining({
-      weblog : { url : 'https://example.com/weblog' },
+      weblog : expect.objectContaining({ url : 'https://example.com/weblog' }),
     }));
   });
 
@@ -292,7 +499,67 @@ describe('config weblog', () => {
       weblog : { url : 123 },
     });
     expect(config).toEqual(expect.objectContaining({
-      weblog : {},
+      weblog : expect.objectContaining({ url : '' }),
+    }));
+  });
+
+  it('returns weblog with valid top credits', () => {
+    const config = buildConfig({
+      ...testConfig,
+      weblog : { topCredits : ['testA', 'testB'] },
+    });
+    expect(config).toEqual(expect.objectContaining({
+      weblog : expect.objectContaining({ topCredits : ['testA', 'testB'] }),
+    }));
+  });
+
+  it('drops invalid top credits', () => {
+    const config = buildConfig({
+      ...testConfig,
+      weblog : { topCredits : ['testA', 2, {}] },
+    });
+    expect(config).toEqual(expect.objectContaining({
+      weblog : expect.objectContaining({ topCredits : ['testA'] }),
+    }));
+  });
+
+  it('returns weblog with empty top credits if invalid', () => {
+    const config = buildConfig({
+      ...testConfig,
+      weblog : { topCredits : { test : 'A' } },
+    });
+    expect(config).toEqual(expect.objectContaining({
+      weblog : expect.objectContaining({ topCredits : [] }),
+    }));
+  });
+
+  it('returns weblog with valid bottom credits', () => {
+    const config = buildConfig({
+      ...testConfig,
+      weblog : { bottomCredits : ['testA', 'testB'] },
+    });
+    expect(config).toEqual(expect.objectContaining({
+      weblog : expect.objectContaining({ bottomCredits : ['testA', 'testB'] }),
+    }));
+  });
+
+  it('drops invalid top credits', () => {
+    const config = buildConfig({
+      ...testConfig,
+      weblog : { bottomCredits : ['testA', 2, {}] },
+    });
+    expect(config).toEqual(expect.objectContaining({
+      weblog : expect.objectContaining({ bottomCredits : ['testA'] }),
+    }));
+  });
+
+  it('returns weblog with empty top credits if invalid', () => {
+    const config = buildConfig({
+      ...testConfig,
+      weblog : { bottomCredits : { test : 'A' } },
+    });
+    expect(config).toEqual(expect.objectContaining({
+      weblog : expect.objectContaining({ bottomCredits : [] }),
     }));
   });
 

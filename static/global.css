@@ -57,6 +57,16 @@ a {
   flex-shrink: 1;
 }
 
+.grid.stretch > * {
+  width: 0%;
+  min-width: var(--grid-item-width, 100%);
+  max-width: 100%;
+}
+
+.stack {
+  margin: calc(1.5 * var(--layout-spacing, 0)) 0;
+}
+
 .split-stack {
   --split-stack-direction: row;
 
@@ -183,7 +193,6 @@ a {
 }
 
 .frame-content {
-  overflow: hidden;
   position: relative;
   top: calc(50% * (1 - 1 / var(--frame-factor)));
   left: calc(50% * (1 - 1 / var(--frame-factor)));
@@ -195,6 +204,10 @@ a {
   transition-property: width, height, top, right;
   transition-duration: var(--transition-fast);
   transition-timing-function: var(--transition-ease);
+}
+
+.frame-content.has-frame {
+  overflow: hidden;
 }
 
 .frame-content > * {
@@ -229,19 +242,19 @@ svg {
   text-shadow: var(--text-shadow);
 }
 
+.scrim {
+  background-color: var(--scrim-colour);
+  box-shadow: 0 0
+    calc(var(--font-size) / 2)
+    calc(var(--font-size) / 2)
+    var(--scrim-colour, transparent);
+}
+
 .article {
-  --scrim-colour: color-mix(in srgb,
-    var(--bg-colour, transparent) 66%,
-    transparent 33%
-  );
   width: 100%;
   max-width: calc(1024px - (2 * var(--layout-spacing, 0)));
   margin: 0 auto;
   white-space: wrap;
-  background-color: var(--scrim-colour);
-  box-shadow: 0 0
-    var(--font-size) var(--font-size)
-    var(--scrim-colour, transparent);
 }
 
 .article h1,

@@ -1,38 +1,71 @@
+export type NavTarget = 'home' | 'highlights' | 'allArticles' | 'contact';
+
 export interface Highlight {
   id : string;
-  type : 'tag';
+  type : 'article' | 'tag';
   key : string;
-  section ?: string;
+  count : number | null;
+  links : { href : string; text : string; }[];
+  title : string;
+  intro : string;
+  outro : string;
+  section : string;
 }
 
 export interface Config {
+  nav : {
+    home : NavTarget[];
+    collection : NavTarget[];
+    article : NavTarget[];
+  };
   likes : { icon : string; text : string; }[] | null;
   dislikes : { icon : string; text : string; }[] | null;
   profileLinks : { text : string; href : string; }[] | null;
   highlights : Highlight[] | null;
   contact : {
     icon : string;
-    text ?: string;
+    text : string;
     link : string;
     href : string;
   }[] | null;
   weblog : {
-    url ?: string;
-  };
+    url : string;
+    topCredits : string[];
+    bottomCredits : string[];
+  } | null;
 }
 
 export const defaultConfig : Config = {
+  nav : {
+    home : ['highlights', 'allArticles', 'contact'],
+    collection : ['home', 'allArticles', 'contact'],
+    article : ['home', 'allArticles', 'contact'],
+  },
   likes : null,
   dislikes : null,
   highlights : null,
   contact : null,
   profileLinks : null,
-  weblog : {},
+  weblog : null,
 };
 
 export function buildConfig(config : unknown) : Config {
   if (typeof config !== 'object' || config === null) return defaultConfig;
   const conf = { ...config } as Config;
+
+  if (!conf.nav || (typeof conf.nav !== 'object')) {
+    conf.nav = defaultConfig.nav;
+  } else {
+    if (!('home' in conf.nav) || !Array.isArray(conf.nav.home)) {
+      conf.nav.home = defaultConfig.nav.home;
+    }
+    if (!('collection' in conf.nav) || !Array.isArray(conf.nav.collection)) {
+      conf.nav.collection = defaultConfig.nav?.collection;
+    }
+    if (!('article' in conf.nav) || !Array.isArray(conf.nav.article)) {
+      conf.nav.article = defaultConfig.nav?.article;
+    };
+  }
 
   if (!Array.isArray((conf.likes))) {
     conf.likes = defaultConfig.likes;
@@ -63,11 +96,39 @@ export function buildConfig(config : unknown) : Config {
       if (typeof item !== 'object' || item === null) return false;
       if (!('id' in item) || typeof item.id !== 'string') return false;
       if (highlightIds.includes(item.id)) return false;
-      if (!('type' in item) || item.type !== 'tag') return false;
+      if (!('type' in item) || !['article', 'tag'].includes(item.type)) {
+        return false;
+      }
       if (!('key' in item) || typeof item.key !== 'string') return false;
-      if ('section' in item && typeof item.section !== 'string') return false;
       highlightIds.push(item.id);
       return true;
+    }).map((item) => {
+      const newItem = { ...item };
+      if (!('count' in item) || typeof item.count !== 'number') {
+        newItem.count = null;
+      }
+      if (!('title' in item) || typeof item.title !== 'string') {
+        newItem.title = '';
+      }
+      if (!('intro' in item) || typeof item.intro !== 'string') {
+        newItem.intro = '';
+      }
+      if (!('outro' in item) || typeof item.outro !== 'string') {
+        newItem.outro = '';
+      }
+      if (!('section' in item) || typeof item.section !== 'string') {
+        newItem.section = '';
+      }
+      if (!('links' in item) || !Array.isArray(item.links)) {
+        newItem.links = [];
+      }
+      newItem.links = newItem.links.filter((link) => {
+        if (typeof link !== 'object' || link === null) return false;
+        if (!('href' in link) || typeof link.href !== 'string') return false;
+        if (!('text' in link) || typeof link.text !== 'string') return false;
+        return true;
+      });
+      return newItem;
     });
   }
 
@@ -97,8 +158,26 @@ export function buildConfig(config : unknown) : Config {
 
   if (!conf.weblog || (typeof conf.weblog !== 'object')) {
     conf.weblog = defaultConfig.weblog;
-  } else if (!('url' in conf.weblog) || typeof conf.weblog.url !== 'string') {
-    delete conf.weblog.url;
+  } else {
+    if (!('url' in conf.weblog) || typeof conf.weblog.url !== 'string') {
+      conf.weblog.url = '';
+    }
+    if (
+      (!('topCredits' in conf.weblog)
+        || !Array.isArray(conf.weblog.topCredits))
+    ) {
+      conf.weblog.topCredits = [];
+    }
+    if (
+      (!('bottomCredits' in conf.weblog)
+        || !Array.isArray(conf.weblog.bottomCredits))
+    ) {
+      conf.weblog.bottomCredits = [];
+    }
+    conf.weblog.topCredits = conf.weblog.topCredits
+      .filter(c => typeof c === 'string');
+    conf.weblog.bottomCredits = conf.weblog.bottomCredits
+      .filter(c => typeof c === 'string');
   }
 
   return conf;

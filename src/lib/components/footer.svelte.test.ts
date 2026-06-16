@@ -17,6 +17,10 @@ const locale = vi.hoisted(() => ({
   } as Record<string, string>,
 }));
 
+let isBrowser = vi.hoisted(() => true);
+
+vi.mock('$app/environment', () => ({ get browser() { return isBrowser; } }));
+
 vi.mock('$lib/hooks/useLocale', async (original) => {
   const originalDefault =
     ((await original()) as { default : () => object; }).default;
@@ -42,7 +46,10 @@ vi.mock('$lib/materials/graphic.svelte', async (original) => {
   return { default : await wrapOriginal(original, { testId : 'graphic' }) };
 });
 
-beforeEach(() => { vi.clearAllMocks(); });
+beforeEach(() => {
+  vi.clearAllMocks();
+  isBrowser = true;
+});
 afterAll(() => { vi.restoreAllMocks(); });
 
 describe('Footer', () => {
@@ -109,5 +116,15 @@ describe('Footer', () => {
     expect(SplitStack).toHaveBeenCalledWithProps(expect.objectContaining({
       alignment : 'start',
     }));
+  });
+
+  it('hides logo graphic server-side', () => {
+    isBrowser = false;
+    render(Footer);
+
+    expect(Graphic).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ show : false }),
+    );
   });
 });

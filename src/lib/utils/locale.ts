@@ -9,6 +9,15 @@ export const defaultLocale = {
     most : 'Most',
     least : 'Least',
   },
+  highlights : {
+    defaultHeading : 'Highlights',
+  },
+  collections : {
+    allArticles : 'All Articles',
+    tagPrefix : '',
+    backPrefix : '',
+    published : 'Published ',
+  },
   contact : {
     header : 'Contact',
     infoHeader : 'Contact Info:',
@@ -16,6 +25,7 @@ export const defaultLocale = {
   nav : {
     home : 'Home',
     highlights : {} as Record<string, string>,
+    allArticles : 'Blog',
     contact : 'Contact',
   },
   alt : {

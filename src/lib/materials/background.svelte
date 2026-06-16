@@ -1,35 +1,45 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
-  import { browser } from '$app/environment';
-  import useTheme from '$lib/hooks/useThemes';
+  import type { Snippet } from 'svelte';
+  import useThemes from '$lib/hooks/useThemes';
   import useGraphics from '$lib/hooks/useGraphics';
   import Graphic from './graphic.svelte';
 
-  const { children } = $props();
+  const { show = true, children } : {
+    show ?: boolean;
+    children : Snippet<[]>;
+  } = $props();
 
-  const { section } = useTheme();
-  const { isGraphic } = useGraphics();
+  const { section } = (() => useThemes())();
+  const { isGraphic } = (() => useGraphics())();
 
-  let hasGraphic = $state<boolean>(true);
+  const graphicClass = $derived.by(() => {
+    const mode = $section?.background.img?.mode ?? 'cover';
+    const base = 'background-graphic';
+    if (mode === 'fixed') {
+      if ($section?.background.img?.anchor === 'right') {
+        return `${base} ${base}-fixed ${base}-anchor-right`;
+      } else if ($section?.background.img?.anchor === 'centre') {
+        return `${base} ${base}-fixed ${base}-anchor-centre`;
+      } else {
+        return `${base} ${base}-fixed ${base}-anchor-left`;
+      }
+    }
+    return `${base} ${base}-cover`;
+  });
 
-  if (browser) {
-    const unsubscribe = section.subscribe((s) => {
-      hasGraphic = !!s?.background.img
-        && isGraphic(s?.background.img?.src ?? '');
-    });
-    onDestroy(unsubscribe);
-  };
+  const hasGraphic = $derived(!!$section?.background.img
+    && isGraphic($section?.background.img?.src ?? ''));
+  const underClass = $derived(
+    'background-underlay' + ((!show || hasGraphic) ? ' bg-disabled' : ''),
+  );
 </script>
 
 <div class="background">
   {@render children()}
-  <div
-    class="background-underlay"
-    style={hasGraphic ? 'background-image: none;' : ''}
-  >
+  <div class={underClass}>
     {#if hasGraphic}
-      <div class="background-graphic">
-        <Graphic src={$section?.background.img?.src} />
+      <div class={graphicClass}>
+        <Graphic src={$section?.background.img?.src} show={show} />
       </div>
     {/if}
   </div>
@@ -51,14 +61,38 @@
     background-image: var(--bg-img);
     background-size: var(--bg-size);
     background-repeat: var(--bg-repeat);
+    background-position: var(--bg-position);
+  }
+
+  .background-underlay.bg-disabled {
+    background-image: none;
   }
 
   .background-graphic {
     position: absolute;
-    inset: -10%;
     z-index: var(--z-graphic-overlay);
     opacity: var(--bg-opacity);
     background-size: var(--bg-size);
     background-repeat: var(--bg-repeat);
+  }
+
+  .background-graphic-cover {
+    inset: -10%;
+  }
+
+  .background-graphic-anchor-left {
+    top: 0;
+    left: 0;
+  }
+
+  .background-graphic-anchor-centre {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .background-graphic-anchor-right {
+    top: 0;
+    right: 0;
   }
 </style>

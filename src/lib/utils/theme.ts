@@ -9,11 +9,14 @@ export interface Section {
     [key : string] : Typography;
   };
   graphics : Record<string, Graphic>;
+  grid : boolean;
+  scrim : boolean;
 }
 
 export type Palette = Record<string, string>;
 
 export type Scale = {
+  maxWidth : string;
   inset : string;
   spacing : string;
   fontSize : string;
@@ -31,7 +34,8 @@ export interface Font {
 export interface Background {
   img ?: {
     src : string;
-    mode : 'cover' | 'tile';
+    mode : 'cover' | 'fixed' | 'tile';
+    anchor ?: 'right' | 'centre' | 'left';
     opacity ?: number;
     colourMap ?: Record<string, string>;
   };
@@ -65,6 +69,8 @@ export const defaultTheme = {
       background : 'default',
       typography : 'default',
       graphics : 'default',
+      grid : true,
+      scrim : false,
     },
   },
   palettes : {
@@ -75,6 +81,7 @@ export const defaultTheme = {
   },
   scales : {
     default : {
+      maxWidth : '128rem',
       inset : '2rem',
       spacing : '4rem',
       fontSize : '1rem',
@@ -139,6 +146,14 @@ function makeSection(section : unknown, { theme } : {
     && (('graphics' in section)
       ? section.graphics
       : defaultTheme.sections.default.graphics));
+  let grid = ((section) && (typeof section === 'object')
+    && (('grid' in section)
+      ? section.grid
+      : defaultTheme.sections.default.grid));
+  let scrim = ((section) && (typeof section === 'object')
+    && (('scrim' in section)
+      ? section.scrim
+      : defaultTheme.sections.default.scrim));
 
   if (typeof palette === 'string')
     palette = getPalette(theme, { key : palette });
@@ -178,7 +193,18 @@ function makeSection(section : unknown, { theme } : {
     });
   else graphics = getGraphics(theme, { palette : palette as Palette });
 
-  return { palette, scale, background, typography, graphics } as Section;
+  if (typeof grid !== 'boolean') grid = true;
+  if (typeof scrim !== 'boolean') scrim = false;
+
+  return {
+    palette,
+    scale,
+    background,
+    typography,
+    graphics,
+    grid,
+    scrim,
+  } as Section;
 }
 
 function makePalette(palette : unknown) : Palette {
@@ -206,6 +232,8 @@ function makeScale(scale : unknown) : Scale {
     }
   }
 
+  if (scl.maxWidth === undefined)
+    scl.maxWidth = defaultTheme.scales.default.maxWidth;
   if (scl.inset === undefined) scl.inset = defaultTheme.scales.default.inset;
   if (scl.spacing === undefined)
     scl.spacing = defaultTheme.scales.default.spacing;
@@ -260,8 +288,14 @@ function makeBackground(background : unknown, { palette } : {
     } else {
       if (typeof bkg.img.mode !== 'string') {
         bkg.img.mode = 'cover';
-      } else if (!['cover', 'tile'].includes(bkg.img.mode)) {
+      } else if (!['cover', 'tile', 'fixed'].includes(bkg.img.mode)) {
         bkg.img.mode = 'cover';
+      }
+
+      if (typeof bkg.img.anchor != 'string') {
+        delete bkg.img.anchor;
+      } else if (!['left', 'centre', 'right'].includes(bkg.img.anchor)) {
+        delete bkg.img.anchor;
       }
 
       if (bkg.img.opacity !== undefined) {

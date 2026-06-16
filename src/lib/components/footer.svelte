@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from '$app/environment';
   import useLocale from '$lib/hooks/useLocale';
   import Optional from '$lib/materials/optional.svelte';
   import SplitStack from '$lib/materials/splitStack.svelte';
@@ -15,7 +16,7 @@
 <footer>
   <SplitStack alignment="start" >
     <Optional display={['tablet', 'desktop', 'wide']}>
-      <Graphic graphic="logo" alt={$locale.alt.logo} />
+      <Graphic graphic="logo" alt={$locale.alt.logo} show={browser}/>
     </Optional>
     <NavLinks links={links} direction="column" />
   </SplitStack>

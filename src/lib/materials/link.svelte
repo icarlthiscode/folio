@@ -2,12 +2,13 @@
   import type { Snippet } from 'svelte';
   import Text from './text.svelte';
 
-  const { href, children } : {
+  const { href, scrim = false, children } : {
     href : string;
+    scrim ?: boolean;
     children : Snippet<[]>;
   } = $props();
 </script>
 
-<Text as="span" typography="link">
+<Text as="span" typography="link" {scrim}>
   <a href={href}>{@render children()}</a>
 </Text>

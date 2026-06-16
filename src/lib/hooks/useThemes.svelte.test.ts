@@ -428,7 +428,7 @@ describe('useThemes', () => {
   it('passes graphic context updates', async () => {
     let actual;
     const props = {
-      graphicKey : '',
+      graphicKey : 'default',
       innerProps : {
         onGraphicChange : (graphic : unknown) => { actual = graphic; },
       },

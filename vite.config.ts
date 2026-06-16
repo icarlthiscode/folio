@@ -1,9 +1,11 @@
 import { svelteTesting } from '@testing-library/svelte/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { sentrySvelteKit } from '@sentry/sveltekit';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
+import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig({
+  build : { sourcemap : true },
   plugins : [
     sentrySvelteKit({
       sourceMapsUploadOptions : {
@@ -15,7 +17,7 @@ export default defineConfig({
     sveltekit(),
   ],
   test : {
-    workspace : [
+    projects : [
       {
         extends : './vite.config.ts',
         plugins : [svelteTesting()],
@@ -64,8 +66,10 @@ export default defineConfig({
           css : true,
           browser : {
             enabled : true,
-            provider : 'playwright',
-            instances : [{ browser : 'chromium' }],
+            provider : playwright(),
+            instances : [{
+              browser : 'chromium',
+            }],
           },
           setupFiles : [
             './vitest-setup.ts',

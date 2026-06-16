@@ -1,4 +1,4 @@
-import { resolveWeblogIndex } from '$lib/utils/weblog';
+import { extractArticle, resolveWeblogIndex } from '$lib/utils/weblog';
 import { fetchResource, fetchJsonResource } from './http';
 
 export async function loadIndex(
@@ -8,7 +8,7 @@ export async function loadIndex(
   if (!basePath) return resolveWeblogIndex({});
   basePath = basePath.endsWith('/') ? basePath : basePath + '/';
   const url = `${basePath}index.json`;
-  const result = await fetchJsonResource(url, { fetch });
+  const result = await fetchJsonResource(url, { fetch }) ?? {};
   return resolveWeblogIndex(result);
 }
 
@@ -20,10 +20,7 @@ export async function loadAbstract(
   basePath = basePath.endsWith('/') ? basePath : basePath + '/';
   const url = `${basePath}abstracts/${article}.md`;
   const content = (await fetchResource(url, { fetch })) ?? '';
-  const titleMatch = content.match(/^# (.+)$/m)?.[1] ?? '';
-  const title = titleMatch.replace(/\\#/g, '').trim();
-  const body = content.replace(/^# .+$/m, '').trim();
-  return { title, body };
+  return extractArticle(content);
 }
 
 export async function loadArticle(
@@ -37,4 +34,16 @@ export async function loadArticle(
   return content
     .replace(/(\]\(\.[^)]+?)\.md(?=[#?)])/g, '$1')
     .replace(/(\]:\s*\.[^)\s]+?)\.md(?=[#?\s]|$)/g, '$1');
+}
+
+export async function loadArticles(
+  basePath : string,
+  articles : string[],
+  { fetch } : { fetch : typeof window.fetch; },
+) {
+  const loader = async (article : string) : Promise<[string, string]> => [
+    article,
+    await loadArticle(basePath, article, { fetch }),
+  ];
+  return Object.fromEntries(await Promise.all(articles.map(loader)));
 }

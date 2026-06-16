@@ -1,16 +1,18 @@
-import { beforeAll, describe, it, expect } from 'vitest';
-import { page } from '@vitest/browser/context';
-import { render } from '@testing-library/svelte';
+import { beforeAll, beforeEach, describe, it, expect } from 'vitest';
+import { page } from 'vitest/browser';
+import { cleanup, render } from '@testing-library/svelte';
 
 import { loadStyles } from '$lib/tests/browser';
+import { makeHtml } from '$lib/tests/component';
 import Article from './article.svelte';
 
 beforeAll(async () => await loadStyles());
+beforeEach(() => { cleanup(); });
 
 describe('Article', () => {
   it('renders content', async () => {
     const { container } = render(Article, {
-      content : '<p data-testid="article-content">Test Article</p>',
+      children : makeHtml('<p data-testid="article-content">Test Article</p>'),
     });
     const content = page.elementLocator(container)
       .getByTestId('article-content');
@@ -18,14 +20,18 @@ describe('Article', () => {
   });
 
   it('renders content scrim', async () => {
+    const expectedScrim = 8;
     const { container } = render(Article, {
-      content : '<p data-testid="article-content">Test Article</p>',
+      children : makeHtml('<p data-testid="article-content">Test Article</p>'),
     });
 
     container.style.setProperty('padding', '32px');
     container.style.setProperty('background-color', '#000');
-    container.style.setProperty('--font-size', '16px');
-    container.style.setProperty('--bg-colour', 'rgba(255, 255, 255, 0.9)');
+    container.style.setProperty('--font-size', `${expectedScrim * 2}px`);
+    container.style.setProperty(
+      '--scrim-colour',
+      'color-mix(in srgb, rgba(255, 255, 255, 0.9) 66%, transparent 33%)',
+    );
 
     const article = page
       .elementLocator(container.firstElementChild as HTMLElement);
@@ -40,18 +46,20 @@ describe('Article', () => {
       .match(/\/\s*([0-9.]+)/)?.[1] ?? '');
     expect(backgroundAlpha).toBeCloseTo(0.6, 2);
     expect(boxShadowAlpha).toBeCloseTo(0.6, 2);
-    expect(boxShadowBlur).toBe('16px');
-    expect(boxShadowSpread).toBe('16px');
+    expect(boxShadowBlur).toBe('8px');
+    expect(boxShadowSpread).toBe('8px');
   });
 
   it('renders alerts', async () => {
     const { container } = render(Article, {
-      content : '<p>This is a normal paragraph.</p>'
+      children : makeHtml('<div display="contents">'
+        + '<p>This is a normal paragraph.</p>'
         + '<blockquote data-testid="blockquote" '
         + 'class="text typography-note typography-alert-warning">'
         + '<p class="text alert typography-alert">WARNING!</p>'
         + '<p class="text typography-note">This is a warning alert.</p>'
-        + '</blockquote>',
+        + '</blockquote>'
+        + '</div>'),
     });
 
     container.style.setProperty('--font-size', '16px');
@@ -102,8 +110,8 @@ describe('Article', () => {
 
   it('renders inline code', async () => {
     const { container } = render(Article, {
-      content : '<p>This is '
-        + '<code class="text code">inline_code</code>.</p>',
+      children : makeHtml('<p>This is '
+        + '<code class="text code">inline_code</code>.</p>'),
     });
 
     container.style.setProperty('--border-radius', '2px');
@@ -123,8 +131,8 @@ describe('Article', () => {
 
   it('renders code blocks', async () => {
     const { container } = render(Article, {
-      content : '<pre><code class="text code-block">'
-        + '<span class="text">const</span> x = 10;</code></pre>',
+      children : makeHtml('<pre><code class="text code-block">'
+        + '<span class="text">const</span> x = 10;</code></pre>'),
     });
 
     container.style.setProperty('--padding-inset', '24px');
@@ -157,7 +165,7 @@ describe('Article', () => {
   it('limits max width to desktop size', async () => {
     await page.viewport(1040, 800);
     const { container } = render(Article, {
-      content : '<p data-testid="article-content">Test Article</p>',
+      children : makeHtml('<p data-testid="article-content">Test Article</p>'),
     });
 
     container.style.setProperty('width', '100%');

@@ -3,9 +3,10 @@
   import Subtitle from './subtitle.svelte';
   import Graphic from './graphic.svelte';
 
-  const { title, subtitle } : {
+  const { title, subtitle, showGraphic = true } : {
     title ?: string;
     subtitle ?: string;
+    showGraphic ?: boolean;
   } = $props();
 </script>
 
@@ -15,7 +16,7 @@
     <Subtitle as="h2" flex>{ subtitle }</Subtitle>
     <div class="filler">
       <div class="filler-content">
-        <Graphic graphic="titleAccent" />
+        <Graphic graphic="titleAccent" show={showGraphic} />
       </div>
     </div>
   </div>
@@ -28,6 +29,7 @@
     align-items: flex-start;
     width: fit-content;
     min-width: 200px;
+    margin: 0;
     padding-right: calc(var(--layout-spacing) * var(--is-wide, 0));
   }
 
@@ -54,5 +56,11 @@
     transition-property: width, height, top, right;
     transition-duration: var(--transition-fast);
     transition-timing-function: var(--transition-ease);
+  }
+
+  @media(768px <= width < 1024px) {
+    .card {
+      margin-top: var(--layout-spacing);
+    }
   }
 </style>

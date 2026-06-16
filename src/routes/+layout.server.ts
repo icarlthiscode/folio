@@ -11,7 +11,7 @@ export const load : LayoutServerLoad = async ({ fetch }) => {
     loadThemes({ fetch }),
   ]);
   const [articleIndex, graphics] = await Promise.all([
-    loadIndex(config.weblog.url ?? '', { fetch }),
+    loadIndex(config.weblog?.url ?? '', { fetch }),
     loadGraphics(themes, { fetch }),
   ]);
 

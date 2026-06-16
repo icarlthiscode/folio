@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { get } from 'svelte/store';
   import type { Section, Typography, Graphic } from '$lib/utils/theme';
   import useThemes from './useThemes';
@@ -36,10 +36,18 @@
     graphic,
     subscribeLocalTheme,
     providerClasses,
-  } = useThemes({
+  } = (() => useThemes({
     sectionKey : props.sectionKey,
     typographyKey : props.typographyKey,
     graphicKey : props.graphicKey,
+  }))();
+
+  onMount(() => {
+    if (props.onSectionChange) section.subscribe(props.onSectionChange);
+    if (props.onTypographyChange) {
+      typography.subscribe(props.onTypographyChange);
+    }
+    if (props.onGraphicChange) graphic.subscribe(props.onGraphicChange);
   });
 
   $effect(() => {
@@ -48,10 +56,6 @@
     if (props.setGraphic) graphic.set(props.setGraphic());
     if (props.getProviderClasses) props.getProviderClasses($providerClasses);
   });
-
-  if (props.onSectionChange) section.subscribe(props.onSectionChange);
-  if (props.onTypographyChange) typography.subscribe(props.onTypographyChange);
-  if (props.onGraphicChange) graphic.subscribe(props.onGraphicChange);
 
   $effect.pre(() => {
     if (props.setThemes) themes.set(props.setThemes());

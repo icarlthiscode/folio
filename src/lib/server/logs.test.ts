@@ -3,14 +3,14 @@ import pino from 'pino';
 
 import { log } from './logs';
 
-let nodeEnv = vi.hoisted(() => 'development');
+let isDev = vi.hoisted(() => true);
 const loggerMock = vi.hoisted(() => ({
   info : vi.fn(),
   error : vi.fn(),
 }));
 
-vi.mock('$env/static/private', () => ({
-  get NODE_ENV() { return nodeEnv; },
+vi.mock('$app/environment', () => ({
+  get dev() { return isDev; },
 }));
 vi.mock('pino', () => ({
   default : vi.fn(() => (loggerMock)),
@@ -21,7 +21,7 @@ function stubEntry() { return { property : 'value' }; }
 beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
-  nodeEnv = 'development';
+  isDev = true;
 });
 afterAll(() => { vi.restoreAllMocks(); });
 
@@ -57,7 +57,7 @@ describe('log', () => {
   });
 
   it('does not format log messages in production', async () => {
-    nodeEnv = 'production';
+    isDev = false;
     await import('./logs');
 
     expect(pino).not.toHaveBeenCalledWith(expect.objectContaining({
@@ -66,7 +66,7 @@ describe('log', () => {
   });
 
   it('formats log messages in development', async () => {
-    nodeEnv = 'development';
+    isDev = true;
     await import('./logs');
 
     expect(pino).toHaveBeenCalledWith(expect.objectContaining({

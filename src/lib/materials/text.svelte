@@ -7,6 +7,7 @@
     centred,
     flex,
     inset,
+    scrim = false,
     typography = 'body',
     as = 'span',
     children,
@@ -15,6 +16,7 @@
     centred ?: boolean;
     flex ?: boolean;
     inset ?: boolean;
+    scrim ?: boolean;
     typography ?: 'body'
       | 'title'
       | 'subtitle'
@@ -28,22 +30,29 @@
       | 'nav'
       | 'tagline'
       | 'list-header'
-      | 'list-header-emphasis';
+      | 'list-header-emphasis'
+      | 'detail';
     as ?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span';
     children : Snippet<[]>;
   } = $props();
 
-  const { providerClasses } = useThemes({ typographyKey : typography });
+  const { providerClasses } = (() => useThemes({
+    typographyKey : typography,
+  }))();
 
-  const className = [$providerClasses, 'text'];
-  if (centred) className.push('text-centred');
-  if (flex) className.push('text-flex');
-  if (inset) className.push('text-inset');
+  const className = $derived.by(() => {
+    const cls = [$providerClasses, 'text'];
+    if (centred) cls.push('text-centred');
+    if (flex) cls.push('text-flex');
+    if (inset) cls.push('text-inset');
+    if (scrim) cls.push('scrim');
+    return cls.join(' ');
+  });
 </script>
 
 <svelte:element
   id={id}
-  class="{className.join(' ')}"
+  class={className}
   this={as}
 >
   {@render children()}

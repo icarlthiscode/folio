@@ -3,12 +3,21 @@ import { render, within } from '@testing-library/svelte';
 
 import { tryGet } from '$lib/utils/typing';
 import { wrapOriginal } from '$lib/tests/component';
-import type { WeblogIndex } from '$lib/utils/weblog';
+import type { Article, WeblogIndex } from '$lib/utils/weblog';
 import Grid from '$lib/materials/grid.svelte';
 import Card from '$lib/materials/card.svelte';
-import Heading from '$lib/materials/heading.svelte';
 import Abstract from './abstract.svelte';
 import ArticleIndex from './articleIndex.svelte';
+
+const baseArticle : Article = {
+  slug : 'test',
+  canonicalRef : undefined,
+  title : 'Test Article',
+  abstract : 'This is a test article.',
+  datePublished : null,
+  contributions : [],
+  tags : [],
+};
 
 const defaultIndex =
   vi.hoisted(() => ({ articles : {}, tags : {} } as WeblogIndex));
@@ -52,39 +61,6 @@ beforeEach(() => {
 afterAll(() => { vi.restoreAllMocks(); });
 
 describe('ArticleIndex', () => {
-  it('renders index heading', async () => {
-    setIndex({
-      articles : {},
-      tags : {
-        test : { slug : 'test', name : 'Test', articles : [] },
-      },
-    });
-
-    const { container } = render(ArticleIndex, { tag : 'test' });
-
-    const heading = within(container).queryByTestId('heading') as HTMLElement;
-    expect(heading).toBeInTheDocument();
-    const headingText = within(heading).getByText('Test');
-    expect(headingText).toBeInTheDocument();
-
-    expect(Heading).toHaveBeenCalledTimes(1);
-    expect(Heading).toHaveBeenCalledWithProps(
-      expect.objectContaining({ level : 2 }),
-    );
-  });
-
-  it('renders index heading with id', async () => {
-    const { container } = render(ArticleIndex, { id : 'test' });
-
-    const heading = within(container).queryByTestId('heading') as HTMLElement;
-    expect(heading).toBeInTheDocument();
-
-    expect(Heading).toHaveBeenCalledTimes(1);
-    expect(Heading).toHaveBeenCalledWithProps(
-      expect.objectContaining({ id : 'test' }),
-    );
-  });
-
   it('renders articles as abstracts', async () => {
     const index = {
       articles : {},
@@ -92,16 +68,26 @@ describe('ArticleIndex', () => {
         test : {
           slug : 'test',
           name : 'Test',
+          description : 'Test description.',
           articles : [
             {
+              ...baseArticle,
               slug : 'article-1',
               title : 'Article 1',
               abstract : 'This is article 1.',
+              tags : [
+                { name : 'Test Tag', slug : 'test' },
+                { name : 'Alt Tag', slug : 'alt' },
+              ],
             },
             {
+              ...baseArticle,
               slug : 'article-2',
               title : 'Article 2',
               abstract : 'This is article 2.',
+              tags : [
+                { name : 'Test Tag', slug : 'test' },
+              ],
             },
           ],
         },
@@ -121,10 +107,147 @@ describe('ArticleIndex', () => {
           title : article.title,
           abstract : article.abstract,
           link : `/articles/${article.slug}`,
+          datePublished : article.datePublished,
         }),
       );
     }
     expect(Abstract).toHaveBeenCalledTimes(2);
+  });
+
+  it('renders articles with canonical reference', async () => {
+    const index = {
+      articles : {},
+      tags : {
+        test : {
+          slug : 'test',
+          name : 'Test',
+          description : 'Test description.',
+          articles : [
+            {
+              ...baseArticle,
+              slug : 'article-1',
+              canonicalRef : '#test',
+              title : 'Article 1',
+              abstract : 'This is article 1.',
+              tags : [
+                { name : 'Test Tag', slug : 'test' },
+              ],
+            },
+          ],
+        },
+      },
+    };
+    setIndex(index);
+
+    render(ArticleIndex, { tag : 'test' });
+
+    expect(Abstract).toHaveBeenCalledOnce();
+    expect(Abstract).toHaveBeenCalledWithProps(
+      expect.objectContaining({ link : `#test` }),
+    );
+  });
+
+  it('does not render more articles than max count', async () => {
+    const expectedCount = 1;
+    const index = {
+      articles : {},
+      tags : {
+        test : {
+          slug : 'test',
+          name : 'Test',
+          description : 'Test description.',
+          articles : [
+            {
+              ...baseArticle,
+              slug : 'article-1',
+            },
+            {
+              ...baseArticle,
+              slug : 'article-2',
+            },
+          ],
+        },
+      },
+    };
+    setIndex(index);
+
+    render(ArticleIndex, { tag : 'test', maxCount : expectedCount });
+
+    expect(Abstract).toHaveBeenCalledTimes(expectedCount);
+  });
+
+  it('renders articles abstract with additional tags', async () => {
+    const index = {
+      articles : {},
+      tags : {
+        test : {
+          slug : 'test',
+          name : 'Test',
+          description : 'Test description.',
+          articles : [
+            {
+              ...baseArticle,
+              slug : 'article-1',
+              title : 'Article 1',
+              abstract : 'This is article 1.',
+              tags : [
+                { name : 'Test Tag', slug : 'test' },
+                { name : 'Alt Tag', slug : 'alt' },
+              ],
+            },
+            {
+              ...baseArticle,
+              slug : 'article-2',
+              title : 'Article 2',
+              abstract : 'This is article 2.',
+              tags : [
+                { name : 'Test Tag', slug : 'test' },
+              ],
+            },
+          ],
+        },
+      },
+    };
+    setIndex(index);
+
+    render(ArticleIndex, { tag : 'test' });
+
+    expect(Abstract).toHaveBeenCalledWithProps(expect.objectContaining({
+      title : index.tags.test?.articles[0]?.title,
+      tags : [index.tags.test?.articles[0]?.tags[1]],
+    }));
+    expect(Abstract).toHaveBeenCalledWithProps(expect.objectContaining({
+      title : index.tags.test?.articles[1]?.title,
+      tags : [],
+    }));
+  });
+
+  it('renders article abstracts with specified heading level', async () => {
+    const index = {
+      articles : {},
+      tags : {
+        test : {
+          slug : 'test',
+          name : 'Test',
+          description : 'Test description.',
+          articles : [
+            {
+              ...baseArticle,
+              slug : 'article-1',
+              title : 'Article 1',
+              abstract : 'This is article 1.',
+            },
+          ],
+        },
+      },
+    };
+    setIndex(index);
+
+    render(ArticleIndex, { tag : 'test', headingLevel : 2 });
+
+    expect(Abstract).toHaveBeenCalledWithProps(
+      expect.objectContaining({ headingLevel : 2 }),
+    );
   });
 
   it('renders article in card', async () => {
@@ -134,13 +257,16 @@ describe('ArticleIndex', () => {
         test : {
           slug : 'test',
           name : 'Test',
+          description : 'Test description.',
           articles : [
             {
+              ...baseArticle,
               slug : 'article-1',
               title : 'Article 1',
               abstract : 'This is article 1.',
             },
             {
+              ...baseArticle,
               slug : 'article-2',
               title : 'Article 2',
               abstract : 'This is article 2.',
@@ -173,13 +299,16 @@ describe('ArticleIndex', () => {
         test : {
           slug : 'test',
           name : 'Test',
+          description : 'Test description.',
           articles : [
             {
+              ...baseArticle,
               slug : 'article-1',
               title : 'Article 1',
               abstract : 'This is article 1.',
             },
             {
+              ...baseArticle,
               slug : 'article-2',
               title : 'Article 2',
               abstract : 'This is article 2.',

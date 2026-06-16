@@ -47,6 +47,7 @@ function compileSection(classes : string[], section : Section) {
       .map(([key, value]) => [`--scale-${kebabCase(key)}`, value])),
     ...Object.fromEntries(Object.entries(section.palette)
       .map(([key, value]) => [`--colour-${kebabCase(key)}`, value])),
+    '--max-page-width' : section.scale.maxWidth,
     '--padding-inset' : section.scale.inset,
     '--layout-spacing' : section.scale.spacing,
     '--border-colour' : section.palette.border ?? 'transparent',
@@ -62,7 +63,18 @@ function compileSection(classes : string[], section : Section) {
     '--bg-size' : (section.background.img?.mode === 'cover')
       ? 'cover'
       : 'auto',
+    '--bg-position' : section.background.img?.mode === 'fixed'
+      ? ((section.background.img?.anchor === 'left')
+          ? 'top left'
+          : ((section.background.img?.anchor === 'right')
+              ? 'top right'
+              : 'top'))
+      : 'initial',
     '--bg-opacity' : section.background.img?.opacity ?? 1,
+    '--scrim-colour' : (section.scrim && section.background.fill)
+      ? (`color-mix(in srgb, ${section.background.fill} 66%, `
+        + 'transparent 33%)')
+      : 'transparent',
   };
   return `${compileClasses(classes)} {\n  ${compileProps(props)}\n}`;
 }

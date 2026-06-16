@@ -14,13 +14,16 @@
     children ?: Snippet<[]>;
   } = $props();
 
-  const classes = ['split-stack'];
-  classes.push(`align-${alignment}`);
-  if (divide) classes.push('divided');
-  if (stackOrder === 'reverse') classes.push('reversed');
-  stack.forEach(s => classes.push(`stack-${s}`));
+  const classes = $derived.by(() => {
+    const cls = ['split-stack'];
+    cls.push(`align-${alignment}`);
+    if (divide) cls.push('divided');
+    if (stackOrder === 'reverse') cls.push('reversed');
+    stack.forEach(s => cls.push(`stack-${s}`));
+    return cls.join(' ');
+  });
 </script>
 
-<div class={classes.join(' ')}>
+<div class={classes}>
   {@render children?.()}
 </div>
